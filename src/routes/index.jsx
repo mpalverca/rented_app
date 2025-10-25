@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { HashRouter as Router, Route, Routes } from "react-router-dom";
 
 import ProtectedRoute from "./ProtectedRoute";
 //Geojson
@@ -10,7 +10,7 @@ import NavBar from "../components/Navbar/NavBar";
 export default class index extends Component {
   render() {
     return (
-      <BrowserRouter>
+      <Router>
         <NavBar />
         <Routes>
           <Route
@@ -34,7 +34,7 @@ export default class index extends Component {
 
           {/*    //auth*/}
         </Routes>
-      </BrowserRouter>
+      </Router>
     );
   }
 }
