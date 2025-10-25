@@ -14,7 +14,7 @@ export default class index extends Component {
         <NavBar />
         <Routes>
           <Route
-            path="/rented_app"
+            path="/"
             element={
               /* <ProtectedRoute>
                 <Home />{" "}
@@ -22,7 +22,7 @@ export default class index extends Component {
               <Home />
             }
           />
-          <Route path="/rented_app/inicio" element={<Home />} />
+          <Route path="/rented_app" element={<Home />} />
           {/* <Route path="/riesgosapp/analisis/*" element={<Analisis />}>
             <Route path="alertmap" element={<Alerts />} />
             <Route path="threatmap" element={<Dangermap />} />
