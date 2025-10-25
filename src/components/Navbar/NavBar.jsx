@@ -19,7 +19,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 //import logo1 from './logo_riesgos2.png';
 
 const pages = [
-    { name: 'Inicio', path: '' },
+    { name: 'Inicio', path: '/rented_app' },
     { name: 'Análisis', path: '/analisis' },
     { name: 'Preparación', path: '/preparacion' },
     { name: 'Respuesta', path: 'Evin' },
@@ -101,7 +101,7 @@ export default function ResponsiveNavBar() {
                         variant="h4"
                         noWrap
                         component="a"
-                        href="/"
+                        href="/rented_app"
                         sx={{
                             mr: 1,
                             display: { xs: 'none', md: 'flex' },
