@@ -11,6 +11,7 @@ import NavBar from "../components/Navbar/NavBar";
 import { AuthProvider } from "../context/AuthContext";
 import Register from "./auth/Register";
 import CreateStore from "./store/createStore";
+import Inventary from "./store/inventory";
 
 export default class index extends Component {
   render() {
@@ -20,7 +21,7 @@ export default class index extends Component {
           <NavBar />
           <Routes>
             <Route
-              path="/"
+              path=""
               element={
                 /* <ProtectedRoute>
                 <Home />{" "}
@@ -45,7 +46,10 @@ export default class index extends Component {
               }
             />
             <Route path="/rented_app" element={<Home />} />
-            <Route path="/create_store" element={<CreateStore/>} />
+            <Route path="/create_store" element={<CreateStore/>} />            
+            <Route path="/my_store/:id/*" element={<HomeStore/>} >
+            <Route path="inventary" element={<Inventary />} />
+            </Route>
             {/* <Route path="/riesgosapp/analisis/*" element={<Analisis />}>
             <Route path="alertmap" element={<Alerts />} />
             <Route path="threatmap" element={<Dangermap />} />

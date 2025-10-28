@@ -20,16 +20,10 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useAuth } from "../../context/AuthContext"; // 👈 Importar el contexto
 
 const pages = [
-  { name: "Productos", path: "/rented_app" },
-  { name: "Tiendas", path: "/analisis" },
+  { name: "Productos", path: "" },
+  { name: "Tiendas", path: "/stores" },
 ];
 
-const userSettings = [
-  { name: "Perfil", path: "/perfil" },
-  { name: "Cuenta", path: "/perfil/cuenta" },
-  { name: "Panel", path: "/perfil/panel" },
-  { name: "Mi Tienda", path: "/Store" },
-];
 
 export default function ResponsiveNavBar() {
   const theme = useTheme();
@@ -41,6 +35,14 @@ export default function ResponsiveNavBar() {
   // 👇 Usar el contexto de autenticación
   const { user, userData, logout, loading } = useAuth();
   const navigate = useNavigate();
+
+  const userSettings = [
+  { name: "Perfil", path: "/perfil" },
+  { name: "Cuenta", path: "/perfil/cuenta" },
+  { name: "Panel", path: "/perfil/panel" },
+
+  { name: "Mi Tienda", path: `/my_store/${userData.store}` },
+];
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -81,10 +83,6 @@ export default function ResponsiveNavBar() {
   };
 
   const handleSettingClick = (path) => {
-    console.log(
-      "userdat",
-      userData.store == null ? "mover a create" : "no mover a create"
-    );
     userData?.store == null ||
     (userData?.store == undefined && path == "/store")
       ? navigate("/create_store")
@@ -131,7 +129,7 @@ export default function ResponsiveNavBar() {
             variant="h4"
             noWrap
             component="a"
-            href="/"
+            href="/rented_app/"
             sx={{
               flexGrow: 1,
               mr: 1,
@@ -202,7 +200,7 @@ export default function ResponsiveNavBar() {
               variant="h4"
               noWrap
               component="a"
-              href="/"
+              href="/rented_app"
               sx={{
                 mr: 1,
                 fontFamily: "monospace",

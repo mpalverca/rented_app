@@ -3,7 +3,12 @@ import {
   addDoc,
   updateDoc,
   doc,
-  arrayUnion
+  getDoc,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -54,5 +59,233 @@ export const storeService = {
       console.error('📝 Error message:', error.message);
       throw new Error('No se pudo actualizar el usuario: ' + error.message);
     }
+  }
+};
+
+// Obtener un objeto específico por ID desde la colección 'store'
+export const getStoreItemById = async (itemId) => {
+  try {
+    if (!itemId) {
+      throw new Error('ID del item es requerido');
+    }
+
+    const docRef = doc(db, 'stores', itemId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return {
+        id: docSnap.id,
+        ...docSnap.data()
+      };
+    } else {
+      console.log('No se encontró el documento con ID:', itemId);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error obteniendo item del store:', error);
+    throw error;
+  }
+};
+
+// Obtener múltiples objetos por sus IDs
+export const getStoreItemsByIds = async (itemIds) => {
+  try {
+    if (!itemIds || !Array.isArray(itemIds)) {
+      throw new Error('Array de IDs es requerido');
+    }
+
+    // Filtrar IDs válidos
+    const validIds = itemIds.filter(id => id && typeof id === 'string');
+    
+    if (validIds.length === 0) {
+      return [];
+    }
+
+    const items = await Promise.all(
+      validIds.map(async (id) => {
+        try {
+          return await getStoreItemById(id);
+        } catch (error) {
+          console.error(`Error obteniendo item ${id}:`, error);
+          return null;
+        }
+      })
+    );
+
+    // Filtrar items nulos
+    return items.filter(item => item !== null);
+  } catch (error) {
+    console.error('Error obteniendo múltiples items:', error);
+    throw error;
+  }
+};
+
+// Obtener todos los items del store
+export const getAllStoreItems = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'store'));
+    const items = [];
+    
+    querySnapshot.forEach((doc) => {
+      items.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
+    return items;
+  } catch (error) {
+    console.error('Error obteniendo todos los items del store:', error);
+    throw error;
+  }
+};
+
+// Obtener items por categoría
+export const getStoreItemsByCategory = async (category) => {
+  try {
+    if (!category) {
+      throw new Error('Categoría es requerida');
+    }
+
+    const q = query(
+      collection(db, 'store'), 
+      where('category', '==', category)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const items = [];
+    
+    querySnapshot.forEach((doc) => {
+      items.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
+    return items;
+  } catch (error) {
+    console.error('Error obteniendo items por categoría:', error);
+    throw error;
+  }
+};
+
+// Obtener items con filtros avanzados
+export const getStoreItemsWithFilters = async (filters = {}) => {
+  try {
+    let q = query(collection(db, 'store'));
+
+    // Aplicar filtros dinámicos
+    if (filters.category) {
+      q = query(q, where('category', '==', filters.category));
+    }
+
+    if (filters.isActive !== undefined) {
+      q = query(q, where('isActive', '==', filters.isActive));
+    }
+
+    if (filters.minPrice !== undefined) {
+      q = query(q, where('price', '>=', filters.minPrice));
+    }
+
+    if (filters.maxPrice !== undefined) {
+      q = query(q, where('price', '<=', filters.maxPrice));
+    }
+
+    if (filters.orderBy) {
+      q = query(q, orderBy(filters.orderBy.field, filters.orderBy.direction || 'asc'));
+    }
+
+    const querySnapshot = await getDocs(q);
+    const items = [];
+    
+    querySnapshot.forEach((doc) => {
+      items.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
+    return items;
+  } catch (error) {
+    console.error('Error obteniendo items con filtros:', error);
+    throw error;
+  }
+};
+
+// Agregar nuevo item al store
+export const addStoreItem = async (itemData) => {
+  try {
+    if (!itemData) {
+      throw new Error('Datos del item son requeridos');
+    }
+
+    const docRef = await addDoc(collection(db, 'store'), {
+      ...itemData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    return {
+      id: docRef.id,
+      ...itemData
+    };
+  } catch (error) {
+    console.error('Error agregando item al store:', error);
+    throw error;
+  }
+};
+
+// Actualizar item existente
+export const updateStoreItem = async (itemId, updateData) => {
+  try {
+    if (!itemId) {
+      throw new Error('ID del item es requerido');
+    }
+
+    const docRef = doc(db, 'store', itemId);
+    await updateDoc(docRef, {
+      ...updateData,
+      updatedAt: new Date()
+    });
+
+    return {
+      id: itemId,
+      ...updateData
+    };
+  } catch (error) {
+    console.error('Error actualizando item:', error);
+    throw error;
+  }
+};
+
+// Eliminar item del store
+export const deleteStoreItem = async (itemId) => {
+  try {
+    if (!itemId) {
+      throw new Error('ID del item es requerido');
+    }
+
+    await deleteDoc(doc(db, 'store', itemId));
+    return true;
+  } catch (error) {
+    console.error('Error eliminando item:', error);
+    throw error;
+  }
+};
+
+// Verificar si un item existe
+export const checkStoreItemExists = async (itemId) => {
+  try {
+    if (!itemId) {
+      return false;
+    }
+
+    const docRef = doc(db, 'store', itemId);
+    const docSnap = await getDoc(docRef);
+    
+    return docSnap.exists();
+  } catch (error) {
+    console.error('Error verificando existencia del item:', error);
+    return false;
   }
 };

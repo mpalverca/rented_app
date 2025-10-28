@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Avatar,
   Typography,
@@ -7,31 +7,55 @@ import {
   Card,
   CardContent,
 } from "@mui/material";
-import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import EditNoteIcon from "@mui/icons-material/EditNote";
-import TerrainIcon from "@mui/icons-material/Terrain";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { WarningAmberOutlined } from "@mui/icons-material";
+import { Outlet, useNavigate, useLocation,useParams } from "react-router-dom";
 import StoreIcon from '@mui/icons-material/Store';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
+
+import { getStoreItemById } from "../../services/storeServices";
+
 export default function Home() {
+  const [storeFire, setStore] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
+  const params = useParams();
 
-  const subRoutes = ["alertmap", "threatmap", "geologia", "fire_camp", "risk"];
+  const subRoutes = ["inventary", "employed", "edit", "pedidos",];
   const isAnalisis = subRoutes.some((route) =>
     location.pathname.includes(route)
   );
 
-  // Datos mejorados con más información
+  console.log(storeFire);
+  console.log(params);
+
+  useEffect(() => {
+    if (params.id) {
+      loadItem();
+    }
+  }, [params.id]);
+
+  const loadItem = async () => {
+    try {
+      setLoading(true);
+      const itemData = await getStoreItemById(params.id);
+      setStore(itemData);
+    } catch (err) {
+      console.error('Error cargando item:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Datos mejorados con más información - CORREGIDO: IDs únicos
   const analisisItems = [
     {
       id: 1,
-      route: "inventario",
+      route: "inventary",
       primary: "Inventario",
-      secondary:
-        "aqui van todos los productos de alquiler que posea tu empresa",
+      secondary: "Aquí van todos los productos de alquiler que posea tu empresa",
       icon: <EditNoteIcon />,
       avatarColor: "#2196f3",
       badge: "Actualizado",
@@ -42,8 +66,7 @@ export default function Home() {
       id: 2,
       route: "personal",
       primary: "Personal",
-      secondary:
-        "Es una situación, suceso o hecho que produce alteración en la vida de las personas, de la economía, los sistemas sociales y el ambiente",
+      secondary: "Es una situación, suceso o hecho que produce alteración en la vida de las personas, de la economía, los sistemas sociales y el ambiente",
       icon: <PeopleAltIcon />,
       avatarColor: "#9c27b0",
       badge: "Nuevo",
@@ -54,27 +77,24 @@ export default function Home() {
       id: 3,
       route: "pedidos",
       primary: "Pedidos",
-      secondary:
-        "El mapa geológico está diseñado en base a los estudios que se encuentran en los archivos municipales",
-      icon: <LocalGroceryStoreIcon/>,
+      secondary: "El mapa geológico está diseñado en base a los estudios que se encuentran en los archivos municipales",
+      icon: <LocalGroceryStoreIcon />,
       avatarColor: "#f50404ff",
       badge: "Base de datos",
       badgeColor: "secondary",
       description: "Composición geológica y características del suelo",
     },
-     {
-      id: 3,
-      route: "pedidos",
+    {
+      id: 4, // CAMBIADO: ID único
+      route: "tienda",
       primary: "MI Tienda",
-      secondary:
-        "Gestiona información hacerca de tu tienda",
-      icon: <StoreIcon  />,
+      secondary: "Gestiona información acerca de tu tienda",
+      icon: <StoreIcon />,
       avatarColor: "#4caf50",
       badge: "Base de datos",
       badgeColor: "secondary",
       description: "Composición geológica y características del suelo",
     },
-    
   ];
 
   const handleItemClick = (route) => {
@@ -97,7 +117,7 @@ export default function Home() {
             mb: 1,
           }}
         >
-         Alquiler de Material de construcción
+          {loading ? "Cargando..." : (storeFire?.nombre || "Mi Tienda")}
         </Typography>
         <Typography
           variant="h6"
@@ -108,8 +128,25 @@ export default function Home() {
             lineHeight: 1.6,
           }}
         >
-          Plataforma integral para el Control de Productos de alquiler para construcción
+          {storeFire?.descripcion || "Plataforma integral para el Control de Productos de alquiler para construcción"}
         </Typography>
+        
+        {/* Mostrar información adicional del store si existe */}
+        {storeFire && (
+          <Box sx={{ mt: 2 }}>
+            <Chip 
+              label={`Categoría: ${storeFire.category || 'Sin categoría'}`} 
+              variant="outlined" 
+              sx={{ mr: 1 }} 
+            />
+            {storeFire.isActive !== undefined && (
+              <Chip 
+                label={storeFire.isActive ? 'Activo' : 'Inactivo'} 
+                color={storeFire.isActive ? 'success' : 'default'}
+              />
+            )}
+          </Box>
+        )}
       </Box>
 
       {/* Grid de items */}
@@ -124,7 +161,7 @@ export default function Home() {
       >
         {analisisItems.map((item) => (
           <Card
-            key={item.id}
+            key={item.id} // AHORA TODOS LOS IDs SON ÚNICOS
             sx={{
               cursor: "pointer",
               transition: "all 0.3s ease",
@@ -180,7 +217,6 @@ export default function Home() {
       </Box>
 
       {/* Footer informativo */}
-     
     </Box>
   );
 }
