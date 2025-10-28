@@ -41,7 +41,7 @@ export default function ResponsiveNavBar() {
   { name: "Cuenta", path: "/perfil/cuenta" },
   { name: "Panel", path: "/perfil/panel" },
 
-  { name: "Mi Tienda", path: `/my_store/${userData.store}` },
+  { name: "Mi Tienda", path: `/my_store/${userData?.store}` },
 ];
 
   const handleOpenNavMenu = (event) => {

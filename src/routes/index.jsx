@@ -21,7 +21,7 @@ export default class index extends Component {
           <NavBar />
           <Routes>
             <Route
-              path="/"
+              path=""
               element={
                 /* <ProtectedRoute>
                 <Home />{" "}
