@@ -12,6 +12,7 @@ import { AuthProvider } from "../context/AuthContext";
 import Register from "./auth/Register";
 import CreateStore from "./store/createStore";
 import Inventary from "./store/inventory";
+import ProductPage from "./store/product/productPage"
 
 export default class index extends Component {
   render() {
@@ -60,6 +61,7 @@ export default class index extends Component {
             <Route path="risk" element={<RiesgosPage />} />
           </Route> */}
             <Route path="*" element={<NotFoud />} />
+            <Route path="/product/:id" element={<ProductPage/>} /> 
 
             {/*    //auth*/}
           </Routes>

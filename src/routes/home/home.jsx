@@ -51,7 +51,7 @@ const Home = () => {
               // Obtener datos de la tienda si existe store
               if (product.store) {
                 storeData = await getStoreNameById(product.store);
-                console.log(`Datos de tienda para ${product.store}:`, storeData);
+                //console.log(`Datos de tienda para ${product.store}:`, storeData);
               }
 
               // Si no hay storeData, usar valores por defecto
@@ -95,7 +95,7 @@ const Home = () => {
           })
         );
         
-        console.log("Productos procesados:", productsWithStoreData);
+        //console.log("Productos procesados:", productsWithStoreData);
         setProducts(productsWithStoreData);
         setFilteredProducts(productsWithStoreData);
         
@@ -199,7 +199,7 @@ const Home = () => {
 
   // Navegar al detalle del producto
   const handleProductClick = (productId) => {
-    navigate(`/producto/${productId}`);
+    navigate(`/product/${productId}`);
   };
 
   // Navegar a la tienda
@@ -215,21 +215,21 @@ const Home = () => {
         sx={{
           background: "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)",
           borderRadius: 3,
-          p: 2,
-          mb: 2,
+          p: 1,
+          mb: 1,
           textAlign: "center",
           color: "white",
         }}
       >
         <Typography
-          variant="h2"
+          variant="h3"
           component="h1"
           gutterBottom
           sx={{ fontWeight: "bold" }}
         >
           ALquiler-CONstrucción
         </Typography>
-        <Typography variant="h5" sx={{ mb: 3, opacity: 0.9 }}>
+        <Typography variant="h5" sx={{ mb: 2, opacity: 0.9 }}>
           Encuentra todo lo que necesitas para alquilar en un solo lugar
         </Typography>
       </Box>

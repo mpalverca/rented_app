@@ -91,16 +91,13 @@ export const productService = {
       throw error;
     }
   },
-};
-
-// Obtener un objeto específico por ID desde la colección 'store'
-export const getStoreItemById = async (itemId) => {
+   async getProductItemById (itemId) {
   try {
     if (!itemId) {
       throw new Error("ID del item es requerido");
     }
 
-    const docRef = doc(db, "stores", itemId);
+    const docRef = doc(db, "Products", itemId);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
@@ -116,7 +113,11 @@ export const getStoreItemById = async (itemId) => {
     console.error("Error obteniendo item del store:", error);
     throw error;
   }
+}
 };
+
+// Obtener un objeto específico por ID desde la colección 'store'
+
 
 // Obtener múltiples objetos por sus IDs
 export const getStoreItemsByIds = async (itemIds) => {
@@ -135,7 +136,7 @@ export const getStoreItemsByIds = async (itemIds) => {
     const items = await Promise.all(
       validIds.map(async (id) => {
         try {
-          return await getStoreItemById(id);
+          return await productService.getProductItemById(id);
         } catch (error) {
           console.error(`Error obteniendo item ${id}:`, error);
           return null;
@@ -179,7 +180,7 @@ export const getAllProductItems = async () => {
 };
 
 // Obtener items con filtros avanzados
-export const getStoreItemsWithFilters = async (filters = {}) => {
+export const getProductItemsWithFilters = async (filters = {}) => {
   try {
     let q = query(collection(db, "store"));
 
@@ -225,7 +226,7 @@ export const getStoreItemsWithFilters = async (filters = {}) => {
 };
 
 // Agregar nuevo item al store
-export const addStoreItem = async (itemData) => {
+export const addProductItem = async (itemData) => {
   try {
     if (!itemData) {
       throw new Error("Datos del item son requeridos");
@@ -248,7 +249,7 @@ export const addStoreItem = async (itemData) => {
 };
 
 // Actualizar item existente
-export const updateStoreItem = async (itemId, updateData) => {
+export const updateProductItem = async (itemId, updateData) => {
   try {
     if (!itemId) {
       throw new Error("ID del item es requerido");
@@ -271,7 +272,7 @@ export const updateStoreItem = async (itemId, updateData) => {
 };
 
 // Eliminar item del store
-export const deleteStoreItem = async (itemId) => {
+export const deleteProductItem = async (itemId) => {
   try {
     if (!itemId) {
       throw new Error("ID del item es requerido");
