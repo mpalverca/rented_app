@@ -18,6 +18,7 @@ import { getStoreItemById } from "../../services/storeServices";
 export default function Home() {
   const [storeFire, setStore] = useState(null);
   const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,9 +28,6 @@ export default function Home() {
   const isAnalisis = subRoutes.some((route) =>
     location.pathname.includes(route)
   );
-
-  console.log(storeFire);
-  console.log(params);
 
   useEffect(() => {
     if (params.id) {

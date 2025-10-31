@@ -47,7 +47,9 @@ export default class index extends Component {
             />
             <Route path="/rented_app" element={<Home />} />
             <Route path="/create_store" element={<CreateStore/>} />            
-            <Route path="/my_store/:id/*" element={<HomeStore/>} >
+            <Route path="/my_store/:id/*" element={<ProtectedRoute>
+              <HomeStore/>
+            </ProtectedRoute>} >
             <Route path="inventary" element={<Inventary />} />
             </Route>
             {/* <Route path="/riesgosapp/analisis/*" element={<Analisis />}>

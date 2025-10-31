@@ -21,18 +21,18 @@ export const productService = {
       const storeWithOwner = {
         ...productData,
         store: storeId,
-        addby: useRevalidator,
+        addby: userId,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       const docRef = await addDoc(collection(db, "Products"), storeWithOwner);
-      console.log("✅ [createStore] Tienda creada con ID:", docRef.id);
+      console.log("✅ [creaste Producto] Producto creado con ID:", docRef.id);
 
       return { id: docRef.id, ...storeWithOwner };
     } catch (error) {
-      console.error("❌ [createStore] Error creando tienda:", error);
-      throw new Error("No se pudo crear la tienda: " + error.message);
+      console.error("❌ [createStore] Error creando producto:", error);
+      throw new Error("No se pudo crear el producto: " + error.message);
     }
   },
 
@@ -59,6 +59,36 @@ export const productService = {
       throw new Error(
         "No se pudo agregar el producto al inventario: " + error.message
       );
+    }
+  },
+  // Obtener items por categoría
+  async getAllProductItem(storeId) {
+    try {
+      if (!storeId) {
+        throw new Error("Id Store requerida");
+      }
+
+      const q = query(
+        collection(db, "Products"),
+        where("store", "==", storeId)
+
+        //select("name", "rate", "image", "tags", "price", "category", "store")
+      );
+
+      const querySnapshot = await getDocs(q);
+      const items = [];
+
+      querySnapshot.forEach((doc) => {
+        items.push({
+          id: doc.id,
+          ...doc.data(),
+        });
+      });
+
+      return items;
+    } catch (error) {
+      console.error("Error obteniendo items por categoría:", error);
+      throw error;
     }
   },
 };
@@ -122,34 +152,14 @@ export const getStoreItemsByIds = async (itemIds) => {
 };
 
 // Obtener todos los items del store
-export const getAllStoreItems = async () => {
+export const getAllProductItems = async () => {
   try {
-    const querySnapshot = await getDocs(collection(db, "store"));
-    const items = [];
-
-    querySnapshot.forEach((doc) => {
-      items.push({
-        id: doc.id,
-        ...doc.data(),
-      });
-    });
-
-    return items;
-  } catch (error) {
-    console.error("Error obteniendo todos los items del store:", error);
-    throw error;
-  }
-};
-
-// Obtener items por categoría
-export const getStoreItemsByCategory = async (category) => {
-  try {
-    if (!category) {
-      throw new Error("Categoría es requerida");
-    }
-
-    const q = query(collection(db, "store"), where("category", "==", category));
-
+    // ✅ CORRECTO: Usar query() para combinar collection y where
+    const q = query(
+      collection(db, "Products"),
+      where("extra", "==", false)
+    );
+    
     const querySnapshot = await getDocs(q);
     const items = [];
 
@@ -159,10 +169,11 @@ export const getStoreItemsByCategory = async (category) => {
         ...doc.data(),
       });
     });
-
+    
+    console.log("Productos con extra=false:", items);
     return items;
   } catch (error) {
-    console.error("Error obteniendo items por categoría:", error);
+    console.error("Error obteniendo todos los items del store:", error);
     throw error;
   }
 };

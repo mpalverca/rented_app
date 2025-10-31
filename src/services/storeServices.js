@@ -87,6 +87,31 @@ export const getStoreItemById = async (itemId) => {
   }
 };
 
+// Obtener un objeto específico por ID desde la colección 'store'
+export const getStoreNameById = async (itemId) => {
+  try {
+    if (!itemId) {
+      throw new Error('ID del item es requerido');
+    }
+    const docRef = doc(db, 'stores', itemId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return {
+        id: docSnap.id,
+        //...docSnap.data()
+        nombre:docSnap.data().nombre
+      };
+    } else {
+      console.log('No se encontró el documento con ID:', itemId);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error obteniendo item del store:', error);
+    throw error;
+  }
+};
+
 // Obtener múltiples objetos por sus IDs
 export const getStoreItemsByIds = async (itemIds) => {
   try {
