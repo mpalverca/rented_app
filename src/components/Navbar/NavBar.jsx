@@ -22,8 +22,8 @@ import { useAuth } from "../../context/AuthContext"; // 👈 Importar el context
 const pages = [
   { name: "Productos", path: "" },
   { name: "Tiendas", path: "/stores" },
+  { name: "Servicios", path: "/services" },
 ];
-
 
 export default function ResponsiveNavBar() {
   const theme = useTheme();
@@ -37,12 +37,11 @@ export default function ResponsiveNavBar() {
   const navigate = useNavigate();
 
   const userSettings = [
-  { name: "Perfil", path: "/perfil" },
-  { name: "Cuenta", path: "/perfil/cuenta" },
-  { name: "Panel", path: "/perfil/panel" },
-
-  { name: "Mi Tienda", path: `/my_store/${userData?.store}` },
-];
+    { name: "Perfil", path: `/my_profile/${user?.uid}` },
+    { name: "Pedidos", path: `/my_cart/${user?.uid}` },    
+    { name: "Servicios", path: "/my_services" },
+    { name: "Mi Tienda", path: `/my_store/${userData?.store}` },
+  ];
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);

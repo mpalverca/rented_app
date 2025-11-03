@@ -12,7 +12,10 @@ import { AuthProvider } from "../context/AuthContext";
 import Register from "./auth/Register";
 import CreateStore from "./store/createStore";
 import Inventary from "./store/inventory";
-import ProductPage from "./store/product/productPage"
+import ProductPage from "./store/product/productPage";
+import Profile from "./profile/Profile";
+import Cart from "./profile/cart";
+import StorePage from "./store/StorePage";
 
 export default class index extends Component {
   render() {
@@ -47,21 +50,36 @@ export default class index extends Component {
               }
             />
             <Route path="/rented_app" element={<Home />} />
-            <Route path="/create_store" element={<CreateStore/>} />            
-            <Route path="/my_store/:id/*" element={<ProtectedRoute>
-              <HomeStore/>
-            </ProtectedRoute>} >
-            <Route path="inventary" element={<Inventary />} />
+            <Route path="/create_store" element={<CreateStore />} />
+            <Route
+              path="/my_store/:id/*"
+              element={
+                <ProtectedRoute>
+                  <HomeStore />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="inventary" element={<Inventary />} />
             </Route>
-            {/* <Route path="/riesgosapp/analisis/*" element={<Analisis />}>
-            <Route path="alertmap" element={<Alerts />} />
-            <Route path="threatmap" element={<Dangermap />} />
-            <Route path="geologia" element={<Geologia />} />
-            <Route path="fire_camp" element={<FireCamp />} />
-            <Route path="risk" element={<RiesgosPage />} />
-          </Route> */}
+            <Route
+              path="/my_profile/:id/*"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            ></Route>
+            <Route
+              path="/my_cart/:id"
+              element={
+                <ProtectedRoute>
+                  <Cart />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFoud />} />
-            <Route path="/product/:id" element={<ProductPage/>} /> 
+             <Route path="/store/:id/*" element={<StorePage />} />
+            <Route path="/product/:id" element={<ProductPage />} />
 
             {/*    //auth*/}
           </Routes>

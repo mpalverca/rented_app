@@ -8,17 +8,16 @@ import {
   Box,
   Rating,
   Chip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Button,
   Divider,
-  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Alert,
   CircularProgress,
 } from "@mui/material";
 import {
-  ExpandMore,
   SentimentVerySatisfied,
   SentimentSatisfied,
   SentimentDissatisfied,
@@ -26,36 +25,58 @@ import {
   Favorite,
   Share,
 } from "@mui/icons-material";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { productService } from "../../../services/productServices";
+import { useAuth } from "../../../context/AuthContext";
+import RatingDetail from "./ratingDetail";
+
 export default function ProductPage() {
-  const [selectedRating, setSelectedRating] = useState("");
-  const [expanded, setExpanded] = useState(false);
-  const [product, setProduct] = useState();
-  const [loading, setLoading] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [product, setProduct] = useState(null);
+  const [loadingProduct, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [cartError, setCartError] = useState("");
   const params = useParams();
-  const loadProducts = async () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const loadProduct = async () => {
     try {
       setLoading(true);
       setError("");
-
       const itemData = await productService.getProductItemById(params.id);
       setProduct(itemData);
     } catch (err) {
-      console.error("Error cargando productos:", err);
-      setError("Error cargando productos: " + err.message);
-      setProduct([]);
+      console.error("Error cargando producto:", err);
+      setError("Error cargando producto: " + err.message);
+      setProduct(null);
     } finally {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    loadProducts();
-    setLoading(true);
-  }, {});
 
-  if (!product) {
+  const productToCart = async () => {
+    try {
+      setCartError("");
+      if (!user) {
+        setCartError("Debes iniciar sesión para agregar productos al carrito");
+        return;
+      }
+
+      await productService.addProductToCart(params.id, user.uid, product.store);
+      handleOpenDialog();
+    } catch (err) {
+      console.error("Error agregando al carrito:", err);
+      setCartError(err.message);
+    }
+  };
+
+  useEffect(() => {
+    loadProduct();
+  }, [params.id]);
+
+  // Mostrar loading mientras se carga
+  if (loadingProduct) {
     return (
       <Container sx={{ py: 4, textAlign: "center" }}>
         <CircularProgress />
@@ -65,6 +86,36 @@ export default function ProductPage() {
       </Container>
     );
   }
+
+  // Mostrar error si hay problema
+  if (error || !product) {
+    return (
+      <Container sx={{ py: 4, textAlign: "center" }}>
+        <Alert severity="error">
+          {error || "Producto no encontrado"}
+        </Alert>
+        <Button onClick={loadProduct} sx={{ mt: 2 }}>
+          Reintentar
+        </Button>
+      </Container>
+    );
+  }
+
+  // Función para obtener imagen segura
+  const getSafeImage = () => {
+    if (product.image && Array.isArray(product.image) && product.image.length > 0) {
+      return product.image[0];
+    }
+    return '/images/default-product.jpg';
+  };
+
+  // Función para obtener miniaturas seguras
+  const getSafeThumbnails = () => {
+    if (product.image && Array.isArray(product.image) && product.image.length > 0) {
+      return product.image;
+    }
+    return ['/images/default-product.jpg'];
+  };
 
   // Calcular rating basado en product.rate
   const calculateRating = (rate) => {
@@ -114,34 +165,23 @@ export default function ProductPage() {
 
   const ratingInfo = calculateRating(product.rate);
 
-  const handleAccordionChange = (panel) => (event, isExpanded) => {
-    setExpanded(isExpanded ? panel : false);
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
   };
 
-  const ratingDescriptions = {
-    good: {
-      title: "👍 Bueno",
-      description:
-        "El producto cumple con lo esperado, en buen estado y funciona correctamente. Recomendado para uso regular.",
-      color: "success",
-      
-    },
-    medium: {
-      title: "😐 Regular",
-      description:
-        "El producto tiene algunos signos de uso pero funciona adecuadamente. Puede tener detalles estéticos menores.",
-      color: "warning",
-    },
-    bad: {
-      title: "👎 Malo",
-      description:
-        "El producto requiere mantenimiento o tiene fallas funcionales. Se recomienda revisión antes del uso.",
-      color: "error",
-    },
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
   };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Mostrar error del carrito */}
+      {cartError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {cartError}
+        </Alert>
+      )}
+
       <Grid container spacing={4}>
         {/* Columna de Imagen */}
         <Grid item size={{ xs: 12, md: 6 }}>
@@ -149,8 +189,8 @@ export default function ProductPage() {
             <CardMedia
               component="img"
               height="500"
-              image={product.image}
-              alt={product.name}
+              image={getSafeImage()}
+              alt={product.name || "Producto"}
               sx={{
                 objectFit: "cover",
                 transition: "transform 0.3s ease",
@@ -161,24 +201,24 @@ export default function ProductPage() {
             />
           </Card>
 
-          {/* Miniaturas (opcional) */}
+          {/* Miniaturas */}
           <Box sx={{ display: "flex", gap: 1, mt: 2, overflowX: "auto" }}>
-            <CardMedia
-              component="img"
-              height="80"
-              sx={{ width: 80, borderRadius: 1, cursor: "pointer" }}
-              image={product.image}
-              alt="Miniatura"
-            />
-            {/* Puedes agregar más miniaturas aquí si tienes más imágenes */}
+            {getSafeThumbnails().map((imageUrl, index) => (
+              <CardMedia
+                key={index}
+                component="img"
+                height="80"
+                sx={{ width: 80, borderRadius: 1, cursor: "pointer" }}
+                image={imageUrl}
+                alt={`Miniatura ${index + 1}`}
+              />
+            ))}
           </Box>
         </Grid>
 
         {/* Columna de Información */}
         <Grid item size={{ xs: 12, md: 6 }}>
-          <Box
-            sx={{ display: "flex", flexDirection: "column", height: "100%" }}
-          >
+          <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
             <Typography
               variant="h3"
               component="h1"
@@ -190,6 +230,7 @@ export default function ProductPage() {
             >
               {product.name}
             </Typography>
+            
             {/* Categoría y Tags */}
             <Box sx={{ mb: 2 }}>
               <Chip
@@ -199,7 +240,7 @@ export default function ProductPage() {
                 sx={{ mb: 1 }}
               />
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {product.tags?.map((tag, index) => (
+                {(product.tags || []).map((tag, index) => (
                   <Chip
                     key={index}
                     label={tag}
@@ -209,6 +250,7 @@ export default function ProductPage() {
                 ))}
               </Box>
             </Box>
+            
             {/* Rating */}
             <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
               <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
@@ -240,7 +282,7 @@ export default function ProductPage() {
                   fontSize: { xs: "2.5rem", md: "3rem" },
                 }}
               >
-                ${product.price.toFixed(2)}
+                ${(product.price || 0).toFixed(2)}
               </Typography>
               <Typography variant="h6" color="text.secondary">
                 por día
@@ -250,21 +292,22 @@ export default function ProductPage() {
             {/* Botones de Acción */}
             <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
               <Button
+                onClick={() => {
+                  productToCart();
+                }}
                 variant="contained"
                 size="large"
                 startIcon={<ShoppingCart />}
                 sx={{
                   flex: 1,
                   py: 1.5,
-                  background:
-                    "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
+                  background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
                   "&:hover": {
-                    background:
-                      "linear-gradient(45deg, #E64A19 30%, #FBC02D 90%)",
+                    background: "linear-gradient(45deg, #E64A19 30%, #FBC02D 90%)",
                   },
                 }}
               >
-                Alquilar Ahora
+                Añadir
               </Button>
 
               <Button variant="outlined" size="large">
@@ -288,6 +331,7 @@ export default function ProductPage() {
           </Box>
         </Grid>
       </Grid>
+
       <Box sx={{ mt: 6 }}>
         <Divider sx={{ mb: 4 }} />
         <Typography variant="h5" gutterBottom>
@@ -297,6 +341,7 @@ export default function ProductPage() {
           {product.desc || "Descripción no disponible."}
         </Typography>
       </Box>
+
       {/* Sección de Rating y Calificaciones */}
       <Box sx={{ mt: 6 }}>
         <Typography
@@ -307,120 +352,37 @@ export default function ProductPage() {
         >
           Calificaciones y Opiniones
         </Typography>
-
-        <Grid container spacing={4}>
-          {/* Resumen de Rating */}
-          <Grid item size={{ xs: 12, md: 3 }}>
-            <Paper sx={{ p: 3, textAlign: "center" }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  mb: 2,
-                }}
-              >
-                {ratingInfo.icon}
-                <Typography variant="h3" sx={{ ml: 1, fontWeight: "bold" }}>
-                  {ratingInfo.rating.toFixed(1)}
-                </Typography>
-              </Box>
-              <Rating
-                value={ratingInfo.rating}
-                precision={0.1}
-                size="large"
-                readOnly
-              />
-              <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-                {ratingInfo.sentiment}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Basado en {ratingInfo.totalVotes} opiniones
-              </Typography>
-            </Paper>
-
-            {/* Desglose de Calificaciones */}
-          </Grid>
-          <Grid item size={{ xs: 12, md: 3 }}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Desglose de Calificaciones
-              </Typography>
-
-              <Box sx={{ mt: 2 }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 1,
-                  }}
-                >
-                  <Typography variant="body2">👍 Bueno</Typography>
-                  <Typography variant="body2" fontWeight="bold">
-                    {ratingInfo.breakdown.good}
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 1,
-                  }}
-                >
-                  <Typography variant="body2">😐 Regular</Typography>
-                  <Typography variant="body2" fontWeight="bold">
-                    {ratingInfo.breakdown.medium}
-                  </Typography>
-                </Box>
-
-                <Box sx={{ display: "-flex", justifyContent: "space-between" }}>
-                  <Typography variant="body2">👎 Malo</Typography>
-                  <Typography variant="body2" fontWeight="bold">
-                    {ratingInfo.breakdown.bad}
-                  </Typography>
-                </Box>
-              </Box>
-            </Paper>
-          </Grid>
-          {/* Acordeón de Explicación de Calificaciones */}
-          <Grid item size={{ xs: 12, md: 6 }}>
-            <Typography variant="h6" gutterBottom>
-              ¿Qué significan las calificaciones?
-            </Typography>
-
-            {Object.entries(ratingDescriptions).map(([key, desc]) => (
-              <Accordion
-                key={key}
-                expanded={expanded === key}
-                onChange={handleAccordionChange(key)}
-                sx={{ mb: 1 }}
-              >
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        fontWeight: "bold",
-                        color: `${desc.color}.main`,
-                      }}
-                    >
-                      {desc.title}
-                    </Typography>
-                  </Box>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography variant="body2" color="text.secondary">
-                    {desc.description}
-                  </Typography>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </Grid>
-        </Grid>
+        <RatingDetail ratingInfo={ratingInfo} />
       </Box>
 
-      {/* Información Adicional (opcional) */}
+      {/* Diálogo de confirmación */}
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Producto Agregado al carrito</DialogTitle>
+        <DialogContent>
+          El producto se ha agregado correctamente al carrito. Recuerde agregar
+          productos de la misma tienda al carrito.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Seguir comprando</Button>
+          <Button
+            onClick={() => navigate(`/store/${product.store}`)}
+            variant="contained"
+          >
+            Ir a tienda
+          </Button>
+          <Button 
+            onClick={() => navigate(`/my_cart/${user?.uid}`)}
+            variant="contained"
+          >
+            Ir al carrito
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

@@ -6,80 +6,29 @@ import {
   CardContent,
   Typography,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Alert,
   CircularProgress,
-  Grid,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  Switch,
-  FormControlLabel,
 } from "@mui/material";
 import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
   Add as AddIcon,
   Inventory as InventoryIcon,
-  Person as PersonIcon,
 } from "@mui/icons-material";
-import { productService,getAllProductItems } from "../../services/productServices";
+import {
+  productService,
+  getAllProductItems,
+} from "../../services/productServices";
 import { useAuth } from "../../context/AuthContext";
 import { useParams } from "react-router-dom";
+import AddProduct from "../../components/inventary/addProduct";
+import ViewProducts from "../../components/inventary/viewProducts";
+import CloseProduct from "../../components/inventary/closeProduct";
 
 // Mock data - en producción esto vendría de Firebase
-const mockProducts = [
-  {
-    id: "1",
-    name: "Taladro Percutor 500W",
-    tags: ["herramientas", "eléctricas", "construcción"],
-    addedBy: "admin@tienda.com",
-    stock: 15,
-    rented: 3,
-    condition: "nuevo",
-    price: 25,
-    category: "herramientas-electricas",
-    isActive: true,
-  },
-  {
-    id: "2",
-    name: "Andamio Metálico 2m",
-    tags: ["andamios", "altura", "construcción"],
-    addedBy: "manager@tienda.com",
-    stock: 8,
-    rented: 5,
-    condition: "usado",
-    price: 80,
-    category: "andamios",
-    isActive: true,
-  },
-  {
-    id: "3",
-    name: "Compactadora de Suelo",
-    tags: ["maquinaria", "pesada", "exterior"],
-    addedBy: "admin@tienda.com",
-    stock: 2,
-    rented: 2,
-    condition: "nuevo",
-    price: 150,
-    category: "maquinaria-pesada",
-    isActive: true,
-  },
-];
+
 
 const Inventary = () => {
   const [products, setProducts] = useState([]);
@@ -128,16 +77,15 @@ const Inventary = () => {
     loadProducts();
   }, []);
 
-
   const loadProducts = async () => {
     try {
       setLoading(true);
       //const itemData = await getAllProductItems ();
-      const itemData =await productService.getAllProductItem(params.id)
+      const itemData = await productService.getAllProductItem(params.id);
       // Simular llamada a API
       setTimeout(() => {
         setProducts(itemData);
-      
+
         setLoading(false);
       }, 1000);
     } catch (err) {
@@ -154,9 +102,10 @@ const Inventary = () => {
         category: product.category,
         stock: product.stock,
         price: product.price,
+        priceLost:product.priceLost,
         condition: product.condition,
         isActive: product.isActive,
-        extra:product.extra
+        extra: product.extra,
       });
       setSelectedProduct(product);
     } else {
@@ -240,13 +189,13 @@ const Inventary = () => {
       // 👇 Preparar datos para Firestore (CORREGIDO)
       const productData = {
         name: formData.name.trim(),
-        descr: formData.category.trim(), 
+        descr: formData.category.trim(),
         extra: false,
-        rate:{
-          good:0,
+        rate: {
+          good: 0,
           Medio: 0,
-          Bad: 0
-        },// ¿Esto es correcto? O debería ser otro campo?
+          Bad: 0,
+        }, // ¿Esto es correcto? O debería ser otro campo?
         tags: formData.tags, // Ya es un array, no necesita trim()
         stock: parseInt(formData.stock),
         rented: 0,
@@ -406,149 +355,15 @@ const Inventary = () => {
       </Box>
 
       {/* Tabla de Productos */}
-      <Card>
-        <CardContent>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <strong>Producto</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Etiquetas</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Agregado Por</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Stock Total</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Alquilados</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Disponibles</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Condición</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Precio/Día</strong>
-                  </TableCell>
-                   <TableCell>
-                    <strong>Extra</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Estado</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Acciones</strong>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <Typography variant="subtitle2">
-                        {product.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {product.category}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 0.5,
-                          maxWidth: 200,
-                        }}
-                      >
-                        {product.tags.map((tag, index) => (
-                          <Chip
-                            key={index}
-                            label={tag}
-                            size="small"
-                            variant="outlined"
-                          />
-                        ))}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <PersonIcon sx={{ mr: 1, fontSize: 16 }} />
-                        {product.addedBy}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={product.stock}
-                        color="primary"
-                        variant="outlined"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={product.rented}
-                        color="secondary"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={getAvailableStock(product)}
-                        color={getStockColor(product)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={product.condition}
-                        color={getConditionColor(product.condition)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">${product.price}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{product.extra}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={product.isActive ? "Activo" : "Inactivo"}
-                        color={product.isActive ? "success" : "default"}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: "flex", gap: 1 }}>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleOpenDialog(product)}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleOpenDeleteDialog(product)}
-                          disabled={product.rented > 0}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+      
+          <ViewProducts
+            products={products}
+            getAvailableStock={getAvailableStock}
+            getStockColor={getStockColor}
+            getConditionColor={getConditionColor}
+            handleOpenDialog={handleOpenDialog}
+            handleOpenDeleteDialog={handleOpenDeleteDialog}
+          />
 
           {products.length === 0 && (
             <Box sx={{ textAlign: "center", py: 4 }}>
@@ -565,9 +380,7 @@ const Inventary = () => {
               </Button>
             </Box>
           )}
-        </CardContent>
-      </Card>
-
+    
       {/* Dialog para Agregar/Editar Producto */}
       <Dialog
         open={openDialog}
@@ -579,117 +392,13 @@ const Inventary = () => {
           {selectedProduct ? "Editar Producto" : "Agregar Nuevo Producto"}
         </DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Nombre del Producto"
-                value={formData.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                required
-              />
-            </Grid>
-
-            <Grid item size={{ xs: 12, sm: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel>Categoría</InputLabel>
-                <Select
-                  value={formData.category}
-                  label="Categoría"
-                  onChange={(e) =>
-                    handleInputChange("category", e.target.value)
-                  }
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item size={{ xs: 12, sm: 4 }}>
-              <TextField
-                fullWidth
-                label="Etiquetas (separadas por coma)"
-                value={formData.tags.join(", ")}
-                onChange={handleTagsChange}
-                placeholder="herramientas, eléctricas, construcción"
-              />
-            </Grid>
-
-            <Grid item size={{ xs: 12, sm: 4 }}>
-              <TextField
-                fullWidth
-                label="Stock Total"
-                type="number"
-                value={formData.stock}
-                onChange={(e) =>
-                  handleInputChange("stock", parseInt(e.target.value) || 0)
-                }
-                inputProps={{ min: 0 }}
-              />
-            </Grid>
-            <Grid item size={{ xs: 12, sm: 4 }}>
-              <TextField
-                fullWidth
-                label="Precio por Día ($)"
-                type="number"
-                value={formData.price}
-                onChange={(e) =>
-                  handleInputChange("price", parseFloat(e.target.value) || 0)
-                }
-                inputProps={{ min: 0, step: 0.01 }}
-              />
-            </Grid>
-            <Grid item size={{ xs: 12, sm: 4 }}>
-              <TextField
-                fullWidth
-                label="Precio por perdida ($)"
-                type="number"
-                value={formData.priceLost}
-                onChange={(e) =>
-                  handleInputChange("price", parseFloat(e.target.value) || 0)
-                }
-                inputProps={{ min: 0, step: 0.01 }}
-              />
-            </Grid>
-
-            <Grid item size={{ xs: 12, sm: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel>Condición</InputLabel>
-                <Select
-                  value={formData.condition}
-                  label="Condición"
-                  onChange={(e) =>
-                    handleInputChange("condition", e.target.value)
-                  }
-                >
-                  {conditions.map((condition) => (
-                    <MenuItem key={condition} value={condition}>
-                      {condition}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item size={{ sx: 12 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.isActive}
-                    onChange={(e) =>
-                      handleInputChange("isActive", e.target.checked)
-                    }
-                    color="primary"
-                  />
-                }
-                label="Producto activo para alquiler"
-              />
-            </Grid>
-          </Grid>
+          <AddProduct
+            categories={categories}
+            formData={formData}
+            handleInputChange={handleInputChange}
+            handleTagsChange={handleTagsChange}
+            conditions={conditions}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancelar</Button>
@@ -702,34 +411,13 @@ const Inventary = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Dialog de Confirmación para Eliminar */}
-      <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>Confirmar Eliminación</DialogTitle>
-        <DialogContent>
-          <Typography>
-            ¿Estás seguro de que deseas eliminar el producto "
-            {selectedProduct?.name}"?
-          </Typography>
-          {selectedProduct?.rented > 0 && (
-            <Alert severity="warning" sx={{ mt: 2 }}>
-              No se puede eliminar porque tiene {selectedProduct.rented}{" "}
-              unidades alquiladas
-            </Alert>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteDialog}>Cancelar</Button>
-          <Button
-            onClick={handleDeleteProduct}
-            color="error"
-            variant="contained"
-            disabled={selectedProduct?.rented > 0}
-          >
-            Eliminar
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <CloseProduct
+        handleCloseDeleteDialog
+        selectedProduct
+        openDeleteDialo
+        handleDeleteProduct
+      />
     </Box>
   );
 };

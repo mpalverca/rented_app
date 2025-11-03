@@ -10,14 +10,14 @@ import {
   orderBy,
   deleteDoc,
   arrayUnion,
+  limit,
+  startAfter
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 
 export const productService = {
   async createProduct(productData, userId, storeId) {
     try {
-      console.log("🔥 [createStore] Iniciando creación de tienda...");
-
       const storeWithOwner = {
         ...productData,
         store: storeId,
@@ -25,10 +25,8 @@ export const productService = {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-
       const docRef = await addDoc(collection(db, "Products"), storeWithOwner);
       console.log("✅ [creaste Producto] Producto creado con ID:", docRef.id);
-
       return { id: docRef.id, ...storeWithOwner };
     } catch (error) {
       console.error("❌ [createStore] Error creando producto:", error);
@@ -38,10 +36,6 @@ export const productService = {
 
   async addProductToStore(productId, storeId) {
     try {
-      console.log("🔄 [addProductToStore] Agregando producto al inventario...");
-      console.log("📦 Product ID:", productId);
-      console.log("🏪 Store ID:", storeId);
-
       // Referencia al documento de la tienda
       const storeRef = doc(db, "stores", storeId);
 
@@ -49,7 +43,6 @@ export const productService = {
       await updateDoc(storeRef, {
         inventary: arrayUnion(productId),
       });
-
       console.log("✅ Producto agregado al inventario exitosamente");
       return true;
     } catch (error) {
@@ -71,7 +64,6 @@ export const productService = {
       const q = query(
         collection(db, "Products"),
         where("store", "==", storeId)
-
         //select("name", "rate", "image", "tags", "price", "category", "store")
       );
 
@@ -91,33 +83,139 @@ export const productService = {
       throw error;
     }
   },
-   async getProductItemById (itemId) {
-  try {
-    if (!itemId) {
-      throw new Error("ID del item es requerido");
+  async getProductItemById(itemId) {
+    try {
+      if (!itemId) {
+        throw new Error("ID del item es requerido");
+      }
+
+      const docRef = doc(db, "Products", itemId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        return {
+          id: docSnap.id,
+          ...docSnap.data(),
+        };
+      } else {
+        console.log("No se encontró el documento con ID:", itemId);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error obteniendo item del store:", error);
+      throw error;
     }
+  },
+  async addProductToCart(productId, userId, storeId) {
+    try {
+      // Validaciones iniciales
+      if (!productId || !userId) {
+        throw new Error("Product ID y User ID son requeridos");
+      }
 
-    const docRef = doc(db, "Products", itemId);
-    const docSnap = await getDoc(docRef);
+      // Referencia al documento de usuario
+      const userRef = doc(db, "users", userId);
 
-    if (docSnap.exists()) {
+      // Verificar que el usuario existe
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        throw new Error("Usuario no encontrado");
+      }
+
+      const userData = userSnap.data();
+      const userCart = userData.cart || [];
+
+      // ✅ VALIDACIÓN: Solo verificar store si el carrito no está vacío
+      if (userCart.length > 0) {
+        const firstProductRef = doc(db, "Products", userCart[0]);
+        const productSnap = await getDoc(firstProductRef);
+
+        if (productSnap.exists()) {
+          const firstProductStore = productSnap.data().store;
+          console.log("Store del primer producto:", firstProductStore);
+          console.log("Store del nuevo producto:", storeId);
+
+          if (storeId !== firstProductStore) {
+            throw new Error(
+              "No puedes mezclar productos de diferentes tiendas. Este producto pertenece a otra tienda."
+            );
+          }
+        }
+      }
+      // Si el carrito está vacío, no hay problema - agregar directamente
+
+      // Verificar si el producto ya está en el carrito
+      if (userCart.includes(productId)) {
+        throw new Error("El producto ya está en el carrito");
+      }
+
+      // Actualizar SOLO el campo cart usando arrayUnion
+      await updateDoc(userRef, {
+        cart: arrayUnion(productId),
+      });
+
+      console.log("✅ Producto agregado al carrito exitosamente");
+      return true;
+    } catch (error) {
+      console.error("❌ Error agregando producto al carrito:", error);
+      console.error("📋 Error code:", error.code);
+      console.error("📝 Error message:", error.message);
+      throw new Error(
+        "No se pudo agregar el producto al carrito: " + error.message
+      );
+    }
+  },
+  async getProductItemsPaginated(lastVisible = null) {
+    const PAGE_SIZE = 10;
+    try {
+      let q;
+
+      if (lastVisible) {
+        // Si hay un último documento visible, empezar después de él
+        q = query(
+          collection(db, "Products"),
+          where("extra", "==", false),
+          orderBy("name"), // Necesitas ordenar por algún campo para la paginación
+          startAfter(lastVisible),
+          limit(PAGE_SIZE)
+        );
+      } else {
+        // Primera página
+        q = query(
+          collection(db, "Products"),
+          where("extra", "==", false),
+          orderBy("name"),
+          limit(PAGE_SIZE)
+        );
+      }
+
+      const querySnapshot = await getDocs(q);
+      const items = [];
+      let lastDoc = null;
+
+      querySnapshot.forEach((doc) => {
+        items.push({
+          id: doc.id,
+          ...doc.data(),
+        });
+        lastDoc = doc; // Guardar el último documento para la próxima paginación
+      });
+
+      console.log("Productos paginados:", items.length);
       return {
-        id: docSnap.id,
-        ...docSnap.data(),
+        products: items,
+        lastVisible: lastDoc,
+        hasMore: items.length === PAGE_SIZE, // Si hay más productos por cargar
       };
-    } else {
-      console.log("No se encontró el documento con ID:", itemId);
-      return null;
+    } catch (error) {
+      console.error("Error obteniendo productos paginados:", error);
+      throw error;
     }
-  } catch (error) {
-    console.error("Error obteniendo item del store:", error);
-    throw error;
-  }
-}
+  },
 };
 
 // Obtener un objeto específico por ID desde la colección 'store'
-
 
 // Obtener múltiples objetos por sus IDs
 export const getStoreItemsByIds = async (itemIds) => {
@@ -156,11 +254,8 @@ export const getStoreItemsByIds = async (itemIds) => {
 export const getAllProductItems = async () => {
   try {
     // ✅ CORRECTO: Usar query() para combinar collection y where
-    const q = query(
-      collection(db, "Products"),
-      where("extra", "==", false)
-    );
-    
+    const q = query(collection(db, "Products"), where("extra", "==", false));
+
     const querySnapshot = await getDocs(q);
     const items = [];
 
@@ -170,7 +265,7 @@ export const getAllProductItems = async () => {
         ...doc.data(),
       });
     });
-    
+
     console.log("Productos con extra=false:", items);
     return items;
   } catch (error) {
