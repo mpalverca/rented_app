@@ -28,6 +28,8 @@ import {
   ShoppingCart,
 } from "@mui/icons-material";
 import { useParams, useNavigate } from "react-router-dom";
+import { storeService } from "../../services/storeServices";
+import MapView from "../../components/maps/mapView";
 
 // Datos de ejemplo - en una app real estos vendrían de tu API
 const mockStoreData = {
@@ -135,14 +137,14 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 export default function StoreProfile() {
-  const { storeId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const [store, setStore] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
   const [error, setError] = useState("");
-
+  console.log(store);
   useEffect(() => {
     const loadStoreData = async () => {
       setLoading(true);
@@ -152,7 +154,7 @@ export default function StoreProfile() {
         // const storeProducts = await productService.getProductsByStore(storeId);
 
         setTimeout(() => {
-          setStore(mockStoreData);
+          //setStore(mockStoreData);
           setProducts(mockProducts);
           setLoading(false);
         }, 1000);
@@ -162,9 +164,23 @@ export default function StoreProfile() {
         setLoading(false);
       }
     };
-
+    if (id) {
+      loadItem();
+    }
     loadStoreData();
-  }, [storeId]);
+  }, [id]);
+
+  const loadItem = async () => {
+    try {
+      setLoading(true);
+      const itemData = await storeService.getStoreItem(id);
+      setStore(itemData);
+    } catch (err) {
+      console.error("Error cargando item:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -219,7 +235,7 @@ export default function StoreProfile() {
             {/* Logo y Botón Seguir */}
             <Grid item size={{ xs: 12, md: 3 }} sx={{ textAlign: "center" }}>
               <Avatar
-                src={store.logo}
+                src={store.imagen}
                 sx={{
                   width: 120,
                   height: 120,
@@ -229,7 +245,7 @@ export default function StoreProfile() {
                   boxShadow: 3,
                 }}
               />
-              <Button
+              {/*  <Button
                 variant="contained"
                 sx={{
                   background: "rgba(255,255,255,0.9)",
@@ -241,16 +257,16 @@ export default function StoreProfile() {
                 }}
               >
                 Seguir Tienda
-              </Button>
+              </Button> */}
             </Grid>
 
             {/* Información Principal */}
-            <Grid item size={{ xs: 12, md: 6 }}>
+            <Grid item size={{ xs: 12, md: 8 }}>
               <Typography variant="h3" gutterBottom fontWeight="bold">
-                {store.name}
+                {store.nombre}
               </Typography>
               <Typography variant="body1" sx={{ mb: 2, opacity: 0.9 }}>
-                {store.description}
+                {store.desc}
               </Typography>
 
               {/* Rating */}
@@ -274,7 +290,7 @@ export default function StoreProfile() {
                     border: "1px solid rgba(255,255,255,0.3)",
                   }}
                 />
-                {store.tags.map((tag, index) => (
+                {/* {store.tags.map((tag, index) => (
                   <Chip
                     key={index}
                     label={tag}
@@ -285,36 +301,7 @@ export default function StoreProfile() {
                       border: "1px solid rgba(255,255,255,0.3)",
                     }}
                   />
-                ))}
-              </Box>
-            </Grid>
-
-            {/* Iconos y Estadísticas */}
-            <Grid item size={{ xs: 12, md: 3 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 1,
-                  mb: 2,
-                  justifyContent: "center",
-                }}
-              >
-                <IconButton sx={{ color: "white" }}>
-                  <Share />
-                </IconButton>
-                <IconButton sx={{ color: "white" }}>
-                  <Favorite />
-                </IconButton>
-              </Box>
-
-              {/* Estadísticas rápidas */}
-              <Box sx={{ textAlign: "center" }}>
-                <Typography variant="h6" fontWeight="bold">
-                  {store.stats.products}
-                </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                  Productos
-                </Typography>
+                ))} */}
               </Box>
             </Grid>
           </Grid>
@@ -496,93 +483,145 @@ export default function StoreProfile() {
             </TabPanel>
 
             <TabPanel value={tabValue} index={2}>
-
-                <Card
-                  elevation={2}
-                  sx={{
-                    border: "2px solid transparent",
-                    background:
-                      "linear-gradient(white, white) padding-box, linear-gradient(45deg, #FF5733 20%, #FFD700 90%) border-box",
-                  }}
-                >
-                  <CardContent>
-                    <Typography
-                      variant="h6"
-                      gutterBottom
-                      sx={{
-                        background:
-                          "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Información de Contacto
-                    </Typography>
-
-                    <Box sx={{ mb: 2 }}>
+              <Card
+                elevation={2}
+                sx={{
+                  border: "2px solid transparent",
+                  background:
+                    "linear-gradient(white, white) padding-box, linear-gradient(45deg, #FF5733 20%, #FFD700 90%) border-box",
+                }}
+              >
+                <CardContent>
+                  <Grid container>
+                    <Grid item size={{ xs: 12, md: 4 }}>
                       <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                        variant="h6"
+                        gutterBottom
+                        sx={{
+                          background:
+                            "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                          fontWeight: "bold",
+                        }}
                       >
-                        <LocationOn sx={{ color: "#FF5733", mr: 1 }} />
-                        {store.address}
+                        Información de Contacto
                       </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ display: "flex", alignItems: "center", mb: 1 }}
-                      >
-                        <Email sx={{ color: "#FF5733", mr: 1 }} />
-                        {store.email}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ display: "flex", alignItems: "center", mb: 1 }}
-                      >
-                        <Phone sx={{ color: "#FF5733", mr: 1 }} />
-                        {store.phone}
-                      </Typography>
-                 
-                    </Box>
 
-                    {/* Redes Sociales */}
-                    <Typography
-                      variant="subtitle2"
-                      gutterBottom
-                      sx={{ fontWeight: "bold" }}
-                    >
-                      Síguenos en:
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                      {store.social.website && (
-                        <Chip
-                          label="Sitio Web"
-                          size="small"
-                          variant="outlined"
-                        />
-                      )}
-                      {store.social.facebook && (
-                        <Chip
-                          label="Facebook"
-                          size="small"
-                          variant="outlined"
-                        />
-                      )}
-                      {store.social.instagram && (
-                        <Chip
-                          label="Instagram"
-                          size="small"
-                          variant="outlined"
-                        />
-                      )}
-                    </Box>
-                  </CardContent>
-                </Card>
-             
+                      <Box sx={{ mb: 2 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                        >
+                          <LocationOn sx={{ color: "#FF5733", mr: 1 }} />
+                          {store.direccion}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                        >
+                          <Email sx={{ color: "#FF5733", mr: 1 }} />
+                          {store.email}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                        >
+                          <Phone sx={{ color: "#FF5733", mr: 1 }} />
+                          {store.telefono}
+                        </Typography>
+                      </Box>
+
+                      {/* Redes Sociales */}
+                      <Typography
+                        variant="subtitle2"
+                        gutterBottom
+                        sx={{ fontWeight: "bold" }}
+                      >
+                        Síguenos en:
+                      </Typography>
+                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                        {store.social.website && (
+                          <Chip
+                            label="Sitio Web"
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                        {store.social.facebook && (
+                          <Chip
+                            label="Facebook"
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                        {store.social.instagram && (
+                          <Chip
+                            label="Instagram"
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                      </Box>
+                    </Grid>
+                    <Grid item size={{ xs: 12, md: 8 }}>
+                      <MapView position={store.ubicacion} />
+                    </Grid>
+                    <Grid item size={{ xs: 12,}}>
+                       <Paper variant="outlined" sx={{ p: 2 }}>
+                                 <Typography
+                        variant="h6"
+                        gutterBottom
+                        sx={{
+                          background:
+                            "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Horario de atención
+                      </Typography>
+                                {store.schedule.map((day) => (
+                                  <Box
+                                    key={day.day}
+                                    sx={{
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      py: 1,
+                                      borderBottom: "1px solid #eee",
+                                    }}
+                                  >
+                                    <Typography variant="body2" fontWeight="medium">
+                                      {day.day}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                      {day.enabled ? (
+                                        <>
+                                          {day.time_am &&
+                                            day.time_am[0] &&
+                                            `${day.time_am[0]} - ${day.time_am[1]}`}
+                                          {day.time_pm &&
+                                            day.time_pm[0] &&
+                                            `, ${day.time_pm[0]} - ${day.time_pm[1]}`}
+                                          {!day.time_am[0] && !day.time_pm[0] && "Cerrado"}
+                                        </>
+                                      ) : (
+                                        "Cerrado"
+                                      )}
+                                    </Typography>
+                                  </Box>
+                                ))}
+                              </Paper>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
             </TabPanel>
           </Paper>
         </Grid>

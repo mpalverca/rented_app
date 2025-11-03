@@ -23,7 +23,8 @@ export const storeService = {
         createdAt: new Date(),
         updatedAt: new Date(),
         activa: true,
-        estado: 'activa'
+        estado: 'activa',
+        Schedule:getDefaultSchedule()
       };
 
       const docRef = await addDoc(collection(db, 'stores'), storeWithOwner);
@@ -36,7 +37,6 @@ export const storeService = {
       throw new Error('No se pudo crear la tienda: ' + error.message);
     }
   },
-
   async addStoreToUser(userId, storeId, storeName) {
     try {
       console.log('👤 [addStoreToUser] Iniciando actualización de usuario...');
@@ -59,11 +59,8 @@ export const storeService = {
       console.error('📝 Error message:', error.message);
       throw new Error('No se pudo actualizar el usuario: ' + error.message);
     }
-  }
-};
-
-// Obtener un objeto específico por ID desde la colección 'store'
-export const getStoreItemById = async (itemId) => {
+  },
+  async getStoreItemById (itemId)  {
   try {
     if (!itemId) {
       throw new Error('ID del item es requerido');
@@ -85,7 +82,93 @@ export const getStoreItemById = async (itemId) => {
     console.error('Error obteniendo item del store:', error);
     throw error;
   }
+}, async getStoreItem (itemId)  {
+  try {
+    if (!itemId) {
+      throw new Error('ID del item es requerido');
+    }
+
+    const docRef = doc(db, 'stores', itemId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return {
+        id: docSnap.id,
+        nombre:docSnap.data().nombre,
+        ubicacion:docSnap.data().ubicacion,
+        social:docSnap.data().social,
+        schedule:docSnap.data().schedule,
+        imagen:docSnap.data().imagen,
+        telefono:docSnap.data().telefono,
+        desc:docSnap.data().descripcion,
+        email:docSnap.data().email,
+        direccion:docSnap.data().direccion
+      };
+    } else {
+      console.log('No se encontró el documento con ID:', itemId);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error obteniendo item del store:', error);
+    throw error;
+  }
+}
+
 };
+
+export const timerStoreServices={
+  async getStoreSchedule  (storeId) {
+  try {
+    if (!storeId) {
+      throw new Error('ID de la tienda es requerido');
+    }
+    
+    const docRef = doc(db, 'stores', storeId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      console.log(docSnap.data().schedule )
+      return data.schedule || getDefaultSchedule(); // Retorna horario o uno por defecto
+    } else {
+      throw new Error('Tienda no encontrada');
+    }
+  } catch (error) {
+    console.error('Error obteniendo horario de la tienda:', error);
+    throw error;
+  }
+},
+async updateStoreSchedule (storeId, schedule) {
+  try {
+    if (!storeId) {
+      throw new Error('ID de la tienda es requerido');
+    }
+
+    const docRef = doc(db, 'stores', storeId);
+    await updateDoc(docRef, {
+      schedule: schedule,
+      updatedAt: new Date()
+    });
+
+    console.log('Horario actualizado correctamente');
+    return true;
+  } catch (error) {
+    console.error('Error actualizando horario:', error);
+    throw error;
+  }
+}
+}
+export const getDefaultSchedule = () => [
+  { day: "Lunes", time_am: ["08:00", "12:00"], time_pm: ["13:00", "18:00"], enabled: true },
+  { day: "Martes", time_am: ["08:00", "12:00"], time_pm: ["13:00", "18:00"], enabled: true },
+  { day: "Miércoles", time_am: ["08:00", "12:00"], time_pm: ["13:00", "18:00"], enabled: true },
+  { day: "Jueves", time_am: ["08:00", "12:00"], time_pm: ["13:00", "18:00"], enabled: true },
+  { day: "Viernes", time_am: ["08:00", "12:00"], time_pm: ["13:00", "18:00"], enabled: true },
+  { day: "Sábado", time_am: ["09:00", "13:00"], time_pm: [], enabled: true },
+  { day: "Domingo", time_am: [], time_pm: [], enabled: true }
+];
+// Obtener un objeto específico por ID desde la colección 'store'
+
 
 // Obtener un objeto específico por ID desde la colección 'store'
 export const getStoreNameById = async (itemId) => {
@@ -129,7 +212,7 @@ export const getStoreItemsByIds = async (itemIds) => {
     const items = await Promise.all(
       validIds.map(async (id) => {
         try {
-          return await getStoreItemById(id);
+          return await storeService.getStoreItemById(id);
         } catch (error) {
           console.error(`Error obteniendo item ${id}:`, error);
           return null;

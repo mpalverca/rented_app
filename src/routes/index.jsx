@@ -16,6 +16,7 @@ import ProductPage from "./store/product/productPage";
 import Profile from "./profile/Profile";
 import Cart from "./profile/cart";
 import StorePage from "./store/StorePage";
+import Horarios from "./store/product/timer/horarios";
 
 export default class index extends Component {
   render() {
@@ -60,6 +61,7 @@ export default class index extends Component {
               }
             >
               <Route path="inventary" element={<Inventary />} />
+              <Route path="timer" element={<Horarios />} />
             </Route>
             <Route
               path="/my_profile/:id/*"

@@ -91,9 +91,7 @@ export default function ProductPage() {
   if (error || !product) {
     return (
       <Container sx={{ py: 4, textAlign: "center" }}>
-        <Alert severity="error">
-          {error || "Producto no encontrado"}
-        </Alert>
+        <Alert severity="error">{error || "Producto no encontrado"}</Alert>
         <Button onClick={loadProduct} sx={{ mt: 2 }}>
           Reintentar
         </Button>
@@ -103,18 +101,26 @@ export default function ProductPage() {
 
   // Función para obtener imagen segura
   const getSafeImage = () => {
-    if (product.image && Array.isArray(product.image) && product.image.length > 0) {
+    if (
+      product.image &&
+      Array.isArray(product.image) &&
+      product.image.length > 0
+    ) {
       return product.image[0];
     }
-    return '/images/default-product.jpg';
+    return "/images/default-product.jpg";
   };
 
   // Función para obtener miniaturas seguras
   const getSafeThumbnails = () => {
-    if (product.image && Array.isArray(product.image) && product.image.length > 0) {
+    if (
+      product.image &&
+      Array.isArray(product.image) &&
+      product.image.length > 0
+    ) {
       return product.image;
     }
-    return ['/images/default-product.jpg'];
+    return ["/images/default-product.jpg"];
   };
 
   // Calcular rating basado en product.rate
@@ -175,13 +181,6 @@ export default function ProductPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Mostrar error del carrito */}
-      {cartError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {cartError}
-        </Alert>
-      )}
-
       <Grid container spacing={4}>
         {/* Columna de Imagen */}
         <Grid item size={{ xs: 12, md: 6 }}>
@@ -218,7 +217,9 @@ export default function ProductPage() {
 
         {/* Columna de Información */}
         <Grid item size={{ xs: 12, md: 6 }}>
-          <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+          <Box
+            sx={{ display: "flex", flexDirection: "column", height: "100%" }}
+          >
             <Typography
               variant="h3"
               component="h1"
@@ -230,7 +231,7 @@ export default function ProductPage() {
             >
               {product.name}
             </Typography>
-            
+
             {/* Categoría y Tags */}
             <Box sx={{ mb: 2 }}>
               <Chip
@@ -250,7 +251,7 @@ export default function ProductPage() {
                 ))}
               </Box>
             </Box>
-            
+
             {/* Rating */}
             <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
               <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
@@ -301,9 +302,11 @@ export default function ProductPage() {
                 sx={{
                   flex: 1,
                   py: 1.5,
-                  background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
+                  background:
+                    "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
                   "&:hover": {
-                    background: "linear-gradient(45deg, #E64A19 30%, #FBC02D 90%)",
+                    background:
+                      "linear-gradient(45deg, #E64A19 30%, #FBC02D 90%)",
                   },
                 }}
               >
@@ -318,7 +321,12 @@ export default function ProductPage() {
                 <Share />
               </Button>
             </Box>
-
+{/* Mostrar error del carrito */}
+      {cartError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {cartError}
+        </Alert>
+      )}
             {/* Información de Disponibilidad */}
             <Alert
               severity={product.isActive ? "success" : "warning"}
@@ -375,7 +383,7 @@ export default function ProductPage() {
           >
             Ir a tienda
           </Button>
-          <Button 
+          <Button
             onClick={() => navigate(`/my_cart/${user?.uid}`)}
             variant="contained"
           >

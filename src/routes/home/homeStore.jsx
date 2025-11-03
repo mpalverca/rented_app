@@ -12,8 +12,8 @@ import { Outlet, useNavigate, useLocation,useParams } from "react-router-dom";
 import StoreIcon from '@mui/icons-material/Store';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
-
-import { getStoreItemById } from "../../services/storeServices";
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { storeService} from "../../services/storeServices";
 
 export default function Home() {
   const [storeFire, setStore] = useState(null);
@@ -24,7 +24,7 @@ export default function Home() {
   const location = useLocation();
   const params = useParams();
 
-  const subRoutes = ["inventary", "employed", "edit", "pedidos",];
+  const subRoutes = ["inventary", "employed", "edit", "timer","rented",];
   const isAnalisis = subRoutes.some((route) =>
     location.pathname.includes(route)
   );
@@ -38,7 +38,7 @@ export default function Home() {
   const loadItem = async () => {
     try {
       setLoading(true);
-      const itemData = await getStoreItemById(params.id);
+      const itemData = await  storeService.getStoreItemById(params.id);
       setStore(itemData);
     } catch (err) {
       console.error('Error cargando item:', err);
@@ -73,7 +73,7 @@ export default function Home() {
     },
     {
       id: 3,
-      route: "pedidos",
+      route: "rented",
       primary: "Pedidos",
       secondary: "El mapa geológico está diseñado en base a los estudios que se encuentran en los archivos municipales",
       icon: <LocalGroceryStoreIcon />,
@@ -85,13 +85,24 @@ export default function Home() {
     {
       id: 4, // CAMBIADO: ID único
       route: "tienda",
-      primary: "MI Tienda",
+      primary: "Mi Tienda",
       secondary: "Gestiona información acerca de tu tienda",
       icon: <StoreIcon />,
       avatarColor: "#4caf50",
       badge: "Base de datos",
       badgeColor: "secondary",
       description: "Composición geológica y características del suelo",
+    },
+    {
+      id: 5, // CAMBIADO: ID único
+      route: "timer",
+      primary: "Horario",
+      secondary: "Gestiona información hacerca de horarios",
+      icon: <AccessTimeIcon />,
+      avatarColor: "#e7da1fff",
+      badge: "Base de datos",
+      badgeColor: "secondary",
+      description: "Estiam horarios para recepción y entrega de material",
     },
   ];
 
