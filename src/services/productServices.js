@@ -166,7 +166,7 @@ export const productService = {
       );
     }
   },
-  async getProductItemsPaginated(lastVisible = null) {
+  async getProductItemsPaginated(lastVisible = null,storeId) {
     const PAGE_SIZE = 10;
     try {
       let q;
@@ -175,6 +175,7 @@ export const productService = {
         // Si hay un último documento visible, empezar después de él
         q = query(
           collection(db, "Products"),
+         where("store", "==", storeId),
           where("extra", "==", false),
           orderBy("name"), // Necesitas ordenar por algún campo para la paginación
           startAfter(lastVisible),
@@ -214,7 +215,55 @@ export const productService = {
     }
   },
 };
+// Tamaño de página - cuántos productos cargar por vez
+const PAGE_SIZE = 10;
 
+export const getProductItemsPaginated = async (lastVisible = null) => {
+  try {
+    let q;
+    
+    if (lastVisible) {
+      // Si hay un último documento visible, empezar después de él
+      q = query(
+        collection(db, "Products"),
+        where("extra", "==", false),
+        orderBy("name"), // Necesitas ordenar por algún campo para la paginación
+        startAfter(lastVisible),
+        limit(PAGE_SIZE)
+      );
+    } else {
+      // Primera página
+      q = query(
+        collection(db, "Products"),
+        where("extra", "==", false),
+        orderBy("name"),
+        limit(PAGE_SIZE)
+      );
+    }
+
+    const querySnapshot = await getDocs(q);
+    const items = [];
+    let lastDoc = null;
+
+    querySnapshot.forEach((doc) => {
+      items.push({
+        id: doc.id,
+        ...doc.data(),
+      });
+      lastDoc = doc; // Guardar el último documento para la próxima paginación
+    });
+
+    console.log("Productos paginados:", items.length);
+    return {
+      products: items,
+      lastVisible: lastDoc,
+      hasMore: items.length === PAGE_SIZE // Si hay más productos por cargar
+    };
+  } catch (error) {
+    console.error("Error obteniendo productos paginados:", error);
+    throw error;
+  }
+};
 // Obtener un objeto específico por ID desde la colección 'store'
 
 // Obtener múltiples objetos por sus IDs

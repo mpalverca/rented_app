@@ -11,18 +11,17 @@ import {
 } from "@mui/material";
 
 import { useNavigate } from "react-router-dom";
-import {
-  getAllProductItems,
-} from "../../services/productServices";
+import { getAllProductItems } from "../../services/productServices";
 import FilterBarHome from "../../components/Navbar/barHome";
 import ProductCard from "../../components/product/productCard";
 import { getStoreNameById } from "../../services/storeServices";
+import { useInfiniteProducts } from "../../components/product/infinityScroll";
 
 const Home = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
+ // const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  //const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -32,15 +31,24 @@ const Home = () => {
   const [categories, setCategories] = useState(["all"]);
   const productsPerPage = 6;
 
+   const { 
+      products, 
+      loading, 
+      loadingMore, 
+      hasMore, 
+      error: productsError,
+      refresh 
+    } = useInfiniteProducts();
+console.log(products)
   // Cargar productos
-  const loadProducts = async () => {
+ /*  const loadProducts = async () => {
     try {
       setLoading(true);
       setError("");
 
       const itemData = await getAllProductItems();
       console.log("Datos crudos de productos:", itemData);
-      
+
       if (itemData && Array.isArray(itemData)) {
         // Enriquecer productos con datos de la tienda
         const productsWithStoreData = await Promise.all(
@@ -66,11 +74,15 @@ const Home = () => {
               // ✅ CORRECTO: Usar spread operator y mantener estructura consistente
               return {
                 ...product,
-                tienda: { // ✅ Cambiar storeData a tienda para consistencia
+                tienda: {
+                  // ✅ Cambiar storeData a tienda para consistencia
                   id: storeData.id || product.store,
-                  nombre: storeData.nombre || storeData.name || "Tienda no disponible",
+                  nombre:
+                    storeData.nombre ||
+                    storeData.name ||
+                    "Tienda no disponible",
                 },
-                };
+              };
             } catch (error) {
               console.error("Error procesando producto:", product, error);
               // Retornar producto con datos básicos en caso de error
@@ -84,7 +96,8 @@ const Home = () => {
                 nombre: product.name || product.nombre || "Producto",
                 descripcion: "Descripción no disponible",
                 precio: 0,
-                imagen: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop",
+                imagen:
+                  "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop",
                 categoria: "Sin categoría",
                 tags: [],
                 rating: 4.0,
@@ -94,11 +107,11 @@ const Home = () => {
             }
           })
         );
-        
+
         //console.log("Productos procesados:", productsWithStoreData);
         setProducts(productsWithStoreData);
         setFilteredProducts(productsWithStoreData);
-        
+
         // Extraer categorías únicas
         const uniqueCategories = [
           "all",
@@ -118,28 +131,31 @@ const Home = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }; */
 
   // Filtros y búsqueda
   useEffect(() => {
     if (products.length === 0) return;
 
-    setLoading(true);
+
 
     let filtered = [...products];
 
     // Filtro por búsqueda
-    if (searchTerm) {
+   /*  if (searchTerm) {
       filtered = filtered.filter(
         (product) =>
-          product.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (product.tienda?.nombre || "").toLowerCase().includes(searchTerm.toLowerCase()) || // ✅ Buscar en tienda.nombre
-          (product.tags && product.tags.some((tag) =>
-            tag.toLowerCase().includes(searchTerm.toLowerCase())
-          ))
+          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          product.descripcion
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          //(product.store?.nombre || "").toLowerCase().includes(searchTerm.toLowerCase()) || // ✅ Buscar en tienda.nombre
+          (product.tags &&
+            product.tags.some((tag) =>
+              tag.toLowerCase().includes(searchTerm.toLowerCase())
+            ))
       );
-    }
+    } */
 
     // Filtro por categoría
     if (categoryFilter !== "all") {
@@ -167,12 +183,12 @@ const Home = () => {
 
     setFilteredProducts(filtered);
     setCurrentPage(1); // Resetear a primera página al filtrar
-    setLoading(false);
+    //setLoading(false);
   }, [products, searchTerm, categoryFilter, sortBy]);
 
   // Cargar productos al montar el componente
   useEffect(() => {
-    loadProducts();
+    //loadProducts();
   }, []);
 
   // Paginación
@@ -202,21 +218,17 @@ const Home = () => {
     navigate(`/product/${productId}`);
   };
 
-  // Navegar a la tienda
-  const handleStoreClick = (storeId, e) => {
-    e.stopPropagation();
-    navigate(`/tienda/${storeId}`);
-  };
+ 
 
   return (
-    <Container maxWidth="xl" sx={{ py: 2 }}>
+    <Box  sx={{ py: 2, px:2}}>
       {/* Hero Section */}
       <Box
         sx={{
           background: "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)",
           borderRadius: 3,
-          p: 1,
-          mb: 1,
+          //p: 1,
+          //mb: 1,
           textAlign: "center",
           color: "white",
         }}
@@ -224,18 +236,18 @@ const Home = () => {
         <Typography
           variant="h3"
           component="h1"
-          gutterBottom
+          //gutterBottom
           sx={{ fontWeight: "bold" }}
         >
           ALquiler-CONstrucción
         </Typography>
-        <Typography variant="h5" sx={{ mb: 2, opacity: 0.9 }}>
+        <Typography variant="h5" sx={{ mb: 0, opacity: 0.9 }}>
           Encuentra todo lo que necesitas para alquilar en un solo lugar
         </Typography>
       </Box>
 
       {/* Filtros y Búsqueda */}
-      <FilterBarHome
+      {/* <FilterBarHome
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         categoryFilter={categoryFilter}
@@ -244,7 +256,7 @@ const Home = () => {
         filteredProducts={filteredProducts}
         sortBy={sortBy}
         setSortBy={setSortBy}
-      />
+      /> */}
 
       {/* Mostrar error si existe */}
       {error && (
@@ -264,20 +276,18 @@ const Home = () => {
         </Alert>
       ) : (
         <>
-          <Grid container spacing={3}>
+          <Grid container spacing={3}  sx={{pt:2}}>
             {currentProducts.map((product) => (
-              <Grid item size={{xs:12, sm:6, md:4}} key={product.id}>
+              <Grid item size={{ xs: 12, sm: 6, md: 2 }} key={product.id}>
                 {/* ✅ CORRECTO: Pasar todas las props correctamente */}
-              
-                   <ProductCard
+
+                <ProductCard
                   product={product} // ✅ Pasar como objeto
                   handleProductClick={handleProductClick} // ✅ Pasar función
                   toggleFavorite={toggleFavorite} // ✅ Pasar función
                   favorites={favorites} // ✅ Pasar Set
-                  handleStoreClick={handleStoreClick} // ✅ Pasar función
+                 
                 />
-                
-               
               </Grid>
             ))}
           </Grid>
@@ -299,25 +309,17 @@ const Home = () => {
 
       {/* Sección de Categorías Populares */}
       {categories.length > 1 && (
-        <Box sx={{ mt: 8, mb: 4 }}>
-          <Typography
-            variant="h4"
-            component="h2"
-            gutterBottom
-            sx={{ textAlign: "center", fontWeight: "bold" }}
-          >
-            Categorías Populares
-          </Typography>
+        <Box>
           <Grid container spacing={2} sx={{ mt: 2 }}>
             {categories
               .filter((cat) => cat !== "all")
               .slice(0, 6)
               .map((category) => (
-                <Grid item xs={6} sm={4} md={2} key={category}>
+                <Grid item size={{ xs: 6, sm: 4, md: 2 }} key={category}>
                   <Card
                     sx={{
                       textAlign: "center",
-                      p: 2,
+                      p: 0,
                       cursor: "pointer",
                       transition: "all 0.3s ease",
                       "&:hover": {
@@ -336,7 +338,7 @@ const Home = () => {
           </Grid>
         </Box>
       )}
-    </Container>
+    </Box>
   );
 };
 

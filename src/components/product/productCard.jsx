@@ -19,15 +19,21 @@ import {
   SentimentSatisfied,
   SentimentDissatisfied,
 } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
 export default function ProductCard({
-  handleStoreClick,
+ 
   product,
   toggleFavorite,
   favorites,
   handleProductClick
 }) {
-  
+    const navigate = useNavigate();
+   // Navegar a la tienda
+    const handleStoreClick = (storeId, e) => {
+      e.stopPropagation();
+      navigate(`/store/${storeId}`);
+    };
   // Función para calcular el rating basado en product.rate
   const calculateRating = (rate) => {
     if (!rate || typeof rate !== 'object') {
@@ -145,26 +151,23 @@ export default function ProductCard({
 
       <CardContent sx={{ flexGrow: 1, p: 2 }}>
         {/* Categoría */}
-        <Chip
+       {/*  <Chip
           label={product.category}
           size="small"
           color="primary"
           variant="outlined"
           sx={{ mb: 1 }}
-        />
+        /> */}
 
         {/* Nombre del Producto */}
         <Typography
-          variant="h6"
+          variant="body1"
           component="h2"
           gutterBottom
           sx={{ fontWeight: "bold" }}
         >
           {product.name}
         </Typography>
-
-       
-
         {/* Rating con carita */}
         <Tooltip 
           title={`${ratingInfo.sentiment} • ${ratingInfo.totalVotes || 0} votos`}
@@ -192,23 +195,27 @@ export default function ProductCard({
         </Tooltip>
 
         {/* Información de la Tienda */}
-        <Box
+      {/*   <Chip
+        label={product.tienda.nombre}
+        icon={ <Store fontSize="small" sx={{ mr: 1, color: "primary.main" }} />
+         }
           sx={{
             display: "flex",
             alignItems: "center",
             mb: 2,
             cursor: "pointer",
+            //border:1,
+           background:" #e2dbdaff 30%",
+              "&:hover":  {
+                background: "linear-gradient(45deg, #E64A19 30%, #FBC02D 90%)",
+              },
           }}
           onClick={(e) => handleStoreClick(product.tienda.id, e)}
-        >
-          <Store fontSize="small" sx={{ mr: 1, color: "primary.main" }} />
-          <Typography variant="body2" sx={{ fontWeight: "medium" }}>
-            {product.tienda.nombre}
-          </Typography>
-        </Box>
+        />
+     */}
 
         {/* Tags */}
-        <Box sx={{ mb: 2, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+       {/*  <Box sx={{ mb: 2, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
           {product.tags &&
             product.tags
               .slice(0, 3)
@@ -222,7 +229,7 @@ export default function ProductCard({
                 />
               ))}
         </Box>
-
+ */}
         {/* Precio y Botón */}
         <Box
           sx={{
@@ -231,7 +238,7 @@ export default function ProductCard({
             alignItems: "center",
           }}
         >
-          <Box>
+          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
             <Typography
               variant="h6"
               color="primary"
@@ -243,8 +250,9 @@ export default function ProductCard({
               /día
             </Typography>
           </Box>
+          <Chip label={product.condition}/>
 
-          <Button
+          {/* <Button
             variant="contained"
             disabled={!product.isActive}
             sx={{
@@ -254,12 +262,12 @@ export default function ProductCard({
               },
             }}
             onClick={(e) => {
-              e.stopPropagation();
+              //e.stopPropagation();
               // Aquí iría la lógica para agregar al carrito o alquilar
             }}
           >
             {product.isActive ? "Alquilar" : "No Disponible"}
-          </Button>
+          </Button> */}
         </Box>
       </CardContent>
     </Card>

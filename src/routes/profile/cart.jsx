@@ -171,9 +171,12 @@ const Cart = () => {
       },
       state: "iniciado",
       ubicación: [coordinates.lat, coordinates.lng],
-    carInit:checkV
+      carInit: checkV,
+      Client: id,
+      store: "storeID"
+      
     };
-    await cartService.createRented();
+    await cartService.createRented(productToRented,id);
   };
 
   if (loading) return <Typography>Cargando carrito...</Typography>;

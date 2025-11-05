@@ -119,6 +119,7 @@ export default function ResponsiveNavBar() {
   return (
     <AppBar
       position="static"
+      //sx={{position:"fixed"}}
       style={{ background: "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)" }}
     >
       <Container maxWidth="xl">

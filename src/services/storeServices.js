@@ -164,8 +164,8 @@ export const getDefaultSchedule = () => [
   { day: "Miércoles", time_am: ["08:00", "12:00"], time_pm: ["13:00", "18:00"], enabled: true },
   { day: "Jueves", time_am: ["08:00", "12:00"], time_pm: ["13:00", "18:00"], enabled: true },
   { day: "Viernes", time_am: ["08:00", "12:00"], time_pm: ["13:00", "18:00"], enabled: true },
-  { day: "Sábado", time_am: ["09:00", "13:00"], time_pm: [], enabled: true },
-  { day: "Domingo", time_am: [], time_pm: [], enabled: true }
+  { day: "Sábado", time_am: ["08:00", "13:00"], time_pm: ["13:00", "18:00"], enabled: true },
+  { day: "Domingo", time_am: ["08:00", "13:00"], time_pm: ["13:00", "18:00"], enabled: true },
 ];
 // Obtener un objeto específico por ID desde la colección 'store'
 
