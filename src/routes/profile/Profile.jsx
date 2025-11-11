@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from "react";
 import {
   Container,
   Paper,
@@ -7,215 +7,230 @@ import {
   Button,
   Grid,
   Box,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   Chip,
-  Card,
-  CardContent,
-  Tab,
-  Tabs
-} from '@mui/material';
+  alpha,
+} from "@mui/material";
 import {
   Person,
   Edit,
-  ShoppingBag,
-  Favorite,
-  LocationOn,
-  Email,
-  Phone,
-  CalendarToday
-} from '@mui/icons-material';
-import { useParams } from 'react-router-dom';
+  Favorite,  
+} from "@mui/icons-material";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import Opcion from "./opcions";
 
-// Datos de ejemplo - en una app real estos vendrían de tu API
-const mockUserData = {
-  id: '1',
-  name: 'Juan Pérez',
-  email: 'juan.perez@example.com',
-  phone: '+1 234 567 8900',
-  joinDate: '2024-01-15',
-  avatar: '/static/images/avatar/1.jpg',
-  address: 'Calle Principal 123, Ciudad, País',
-  bio: 'Apasionado por la tecnología y las compras online.',
-  stats: {
-    orders: 12,
-    favorites: 8,
-    reviews: 5
-  },
-  recentOrders: [
-    { id: 'ORD-001', date: '2024-03-15', total: 150.00, status: 'Entregado' },
-    { id: 'ORD-002', date: '2024-03-10', total: 89.99, status: 'En camino' },
-    { id: 'ORD-003', date: '2024-03-05', total: 45.50, status: 'Entregado' }
-  ]
-};
-
-function TabPanel({ children, value, index, ...other }) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`profile-tabpanel-${index}`}
-      aria-labelledby={`profile-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+// Componente para mostrar ratings con estrellas
+const RatingChip = ({ type, count, color }) => (
+  <Chip
+    icon={<Favorite sx={{ fontSize: 16 }} />}
+    label={`${count} ${type}`}
+    size="small"
+    sx={{
+      background: alpha(color, 0.1),
+      color: color,
+      border: `1px solid ${alpha(color, 0.3)}`,
+      fontWeight: "medium",
+      "& .MuiChip-icon": { color: color },
+    }}
+  />
+);
 
 export default function Profile() {
-  const { userId } = useParams(); // Obtener el ID del usuario de la URL
-  const [user, setUser] = useState(null);
-  const [tabValue, setTabValue] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const { user, userData, logout, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  useEffect(() => {
-    // Simular carga de datos del usuario
-    const loadUserData = async () => {
-      setLoading(true);
-      try {
-        // En una app real, aquí harías una llamada a tu API
-        // const userData = await userService.getUserById(userId);
-        setTimeout(() => {
-          setUser(mockUserData);
-          setLoading(false);
-        }, 1000);
-      } catch (error) {
-        console.error('Error cargando perfil:', error);
-        setLoading(false);
-      }
-    };
 
-    loadUserData();
-  }, [userId]);
+  const subRoutes = [
+    "partners",
+    "rented",
+    "my_cart",
+    "services",
+    "edit",
+    "timer",
+  ];
+  const isAnalisis = subRoutes.some((route) =>
+    location.pathname.includes(route)
+  );
 
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
+  const handleItemClick = (route) => {
+    navigate(route);
   };
+
+  
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography>Cargando perfil...</Typography>
+      <Container maxWidth="lg" sx={{ py: 4, textAlign: "center" }}>
+        <Typography variant="h6" color="text.secondary">
+          Cargando perfil...
+        </Typography>
       </Container>
     );
   }
 
   if (!user) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography>Usuario no encontrado</Typography>
+      <Container maxWidth="lg" sx={{ py: 4, textAlign: "center" }}>
+        <Typography variant="h6" color="error">
+          Usuario no encontrado
+        </Typography>
+        <Button
+          variant="contained"
+          sx={{ mt: 2 }}
+          onClick={() => navigate("/login")}
+        >
+          Iniciar Sesión
+        </Button>
       </Container>
     );
   }
-
+if (isAnalisis) {
+    return <Outlet />;
+  }
   return (
-    <Container maxWidth="lg" sx={{ py: 1 }}>
+    <Box sx={{ my: 2, mx: { xs: 1, md: 3 } }}>
       {/* Header del Perfil */}
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          p: 4, 
+      <Paper
+        elevation={0}
+        sx={{
+          p: { xs: 2, md: 4 },
           mb: 3,
-          background: "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)",
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
+          background:
+            "linear-gradient(135deg, #FF5733 0%, #FF8C00 50%, #FFD700 100%)",
+          color: "white",
+          position: "relative",
+          overflow: "hidden",
+          borderRadius: 3,
+          "&::before": {
             content: '""',
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0,0,0,0.1)',
-          }
+            background:
+              "linear-gradient(45deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.05) 100%)",
+          },
         }}
       >
         <Box position="relative" zIndex={1}>
           <Grid container spacing={3} alignItems="center">
-            <Grid item size={{xs:12, md:3}} sx={{ textAlign: 'center' }}>
+            {/* Avatar Section */}
+            <Grid item xs={12} md={3} sx={{ textAlign: "center" }}>
               <Avatar
-                src={user.avatar}
+                src={userData?.image}
                 sx={{
-                  width: 120,
-                  height: 120,
-                  mx: 'auto',
+                  width: { xs: 100, md: 120 },
+                  height: { xs: 100, md: 120 },
+                  mx: "auto",
                   mb: 2,
-                  border: '4px solid',
-                  borderColor: 'white',
-                  boxShadow: 3
+                  border: "4px solid",
+                  borderColor: "white",
+                  boxShadow: 3,
+                  bgcolor: alpha("#FFFFFF", 0.2),
                 }}
               >
-                <Person sx={{ fontSize: 60 }} />
+                <Person sx={{ fontSize: { xs: 50, md: 60 } }} />
               </Avatar>
-              <Button
-                variant="contained"
-                startIcon={<Edit />}
-                sx={{ 
-                  mt: 1,
-                  background: 'rgba(255,255,255,0.2)',
-                  backdropFilter: 'blur(10px)',
-                  color: 'white',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  '&:hover': {
-                    background: 'rgba(255,255,255,0.3)',
-                  }
-                }}
-              >
-                Editar Foto
-              </Button>
+
+              {/* Stats rápidos */}
             </Grid>
 
-            <Grid item size={{xs:12, md:6}}>
-              <Typography variant="h4" gutterBottom fontWeight="bold">
-                {user.name}
+            {/* Información del usuario */}
+            <Grid item xs={12} md={6}>
+              <Typography
+                variant="h4"
+                gutterBottom
+                fontWeight="bold"
+                sx={{
+                  fontSize: { xs: "1.75rem", md: "2.125rem" },
+                  textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                }}
+              >
+                {userData?.nombre || "Usuario"}
               </Typography>
-              <Typography variant="body1" paragraph sx={{ opacity: 0.9 }}>
-                {user.bio}
+
+              <Typography
+                variant="h6"
+                paragraph
+                sx={{
+                  opacity: 0.9,
+                  mb: 3,
+                  fontSize: { xs: "1rem", md: "1.25rem" },
+                }}
+              >
+                {userData?.email}
               </Typography>
-              
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                <Chip
-                  icon={<ShoppingBag />}
-                  label={`${user.stats.orders} Pedidos`}
+
+              {/* Ratings */}
+              {userData?.review && (
+                <Box
                   sx={{
-                    background: 'rgba(255,255,255,0.2)',
-                    color: 'white',
-                    border: '1px solid rgba(255,255,255,0.3)',
+                    background: alpha("#FFFFFF", 0.2),
+                    display: "flex",
+                    gap: 1,
+                    flexWrap: "wrap",
+                    mb: 2,
+                    border: "px solid rgba(255,255,255,0.3)",
                   }}
-                />
-                <Chip
-                  icon={<Favorite />}
-                  label={`${user.stats.favorites} Favoritos`}
-                  sx={{
-                    background: 'rgba(255,255,255,0.2)',
-                    color: 'white',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                  }}
-                />
+                >
+                  <RatingChip
+                    type="Excelente"
+                    count={userData.review.excellent || 0}
+                    color="#4CAF50"
+                  />
+                  <RatingChip
+                    type="Bueno"
+                    count={userData.review.good || 0}
+                    color="#FF9800"
+                  />
+                  <RatingChip
+                    type="Regular"
+                    count={userData.review.average || 0}
+                    color="#F44336"
+                  />
+                </Box>
+              )}
+
+              {/* Información adicional */}
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                
+                {userData?.location && (
+                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                    📍 {userData.location}
+                  </Typography>
+                )}
               </Box>
             </Grid>
 
-            <Grid item size={{xs:12, md:3}}>
-              <Button 
-                variant="contained" 
-                fullWidth 
+            {/* Botones de acción */}
+            <Grid
+              item
+              xs={12}
+              md={3}
+              sx={{ textAlign: { xs: "center", md: "right" } }}
+            >
+              <Button
+                variant="contained"
                 startIcon={<Edit />}
                 sx={{
-                  background: 'rgba(255,255,255,0.9)',
-                  color: '#FF5733',
-                  fontWeight: 'bold',
-                  '&:hover': {
-                    background: 'white',
-                    transform: 'translateY(-2px)',
-                    boxShadow: 3
+                  background: "rgba(255,255,255,0.95)",
+                  color: "#FF5733",
+                  fontWeight: "bold",
+                  px: 3,
+                  py: 1,
+                  borderRadius: 2,
+                  "&:hover": {
+                    background: "white",
+                    transform: "translateY(-2px)",
+                    boxShadow: 4,
                   },
-                  transition: 'all 0.3s ease'
+                  transition: "all 0.3s ease",
+                  mb: 1,
+                  width: { xs: "100%", md: "auto" },
                 }}
+                onClick={() => navigate("edit")}
               >
                 Editar Perfil
               </Button>
@@ -224,68 +239,10 @@ export default function Profile() {
         </Box>
       </Paper>
 
-      {/* Información de Contacto */}
-      <Grid container spacing={3}>
-        <Grid item size={{xs:12,}}>
-          <Card 
-            elevation={2}
-            sx={{
-              border: '2px solid transparent',
-              background: 'linear-gradient(white, white) padding-box, linear-gradient(45deg, #FF5733 20%, #FFD700 90%) border-box',
-            }}
-          >
-            <CardContent>
-              <Typography 
-                variant="h6" 
-                gutterBottom 
-                sx={{
-                  background: "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)",
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  fontWeight: 'bold'
-                }}
-              >
-                Información de Contacto
-              </Typography>
-              <List>
-                <ListItem>
-                  <ListItemIcon>
-                    <Email sx={{ color: '#FF5733' }} />
-                  </ListItemIcon>
-                  <ListItemText primary="Email" secondary={user.email} />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <Phone sx={{ color: '#FF5733' }} />
-                  </ListItemIcon>
-                  <ListItemText primary="Teléfono" secondary={user.phone} />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <LocationOn sx={{ color: '#FF5733' }} />
-                  </ListItemIcon>
-                  <ListItemText primary="Dirección" secondary={user.address} />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <CalendarToday sx={{ color: '#FF5733' }} />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="Miembro desde" 
-                    secondary={new Date(user.joinDate).toLocaleDateString('es-ES')} 
-                  />
-                </ListItem>
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-
-       
-      </Grid>
-
-      {/* Estadísticas rápidas */}
+      {/* Contenido principal */}
       
-    </Container>
+        <Opcion handleItemClick={handleItemClick}/>
+      
+    </Box>
   );
 }

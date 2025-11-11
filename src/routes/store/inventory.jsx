@@ -2,8 +2,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Button,
   Dialog,
@@ -19,7 +17,7 @@ import {
 } from "@mui/icons-material";
 import {
   productService,
-  getAllProductItems,
+ 
 } from "../../services/productServices";
 import { useAuth } from "../../context/AuthContext";
 import { useParams } from "react-router-dom";
@@ -42,7 +40,7 @@ const Inventary = () => {
   // 👇 Obtener el usuario actual del contexto y navigate
   const { user } = useAuth();
   const params = useParams();
-  console.log(params);
+
   // Form state
   const [formData, setFormData] = useState({
     name: "",
@@ -72,7 +70,6 @@ const Inventary = () => {
     "usado-regular",
     "requiere-mantenimiento",
   ];
-
   useEffect(() => {
     loadProducts();
   }, []);
@@ -81,7 +78,8 @@ const Inventary = () => {
     try {
       setLoading(true);
       //const itemData = await getAllProductItems ();
-      const itemData = await productService.getAllProductItem(params.id);
+      const itemData = await productService.getAllProductItem(params.storeId);
+     
       // Simular llamada a API
       setTimeout(() => {
         setProducts(itemData);
@@ -193,8 +191,9 @@ const Inventary = () => {
         extra: false,
         rate: {
           good: 0,
-          Medio: 0,
-          Bad: 0,
+          medio: 0,
+          bad: 0,
+          total:0
         }, // ¿Esto es correcto? O debería ser otro campo?
         tags: formData.tags, // Ya es un array, no necesita trim()
         stock: parseInt(formData.stock),
@@ -202,7 +201,7 @@ const Inventary = () => {
         price: parseFloat(formData.price),
         condition: formData.condition,
         category: formData.category,
-        image: imageUrl.trim() || null,
+        image: [imageUrl.trim()]|| null,
         isActive: formData.isActive,
         addedBy: user?.nombre || user?.email || "No definido",
         createdAt: new Date(),
@@ -227,9 +226,9 @@ const Inventary = () => {
         const newProductId = await productService.createProduct(
           productData,
           user.uid,
-          params.id
+          params.storeId
         );
-        await productService.addProductToStore(newProductId.id, params.id);
+        await productService.addProductToStore(newProductId.id, params.storeId);
         // Agregar al estado local
         const newProduct = {
           id: newProductId,

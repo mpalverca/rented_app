@@ -17,9 +17,10 @@ import { LocalizationProvider, DateTimePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { es } from "date-fns/locale";
 import { cartService } from "../../services/cartServices";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import CartTable from "./cart/cartTable";
 import MapContainer from "../../components/maps/mapContainer";
+import rentedServices from "../../services/rentedServices";
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -31,8 +32,10 @@ const Cart = () => {
     startDate: new Date().toISOString().slice(0, 16),
     endDate: "",
     note: "",
+    reference: "",
   });
-  const { id } = useParams();
+  const { userId } = useParams();
+  const navigate = useNavigate();
 
   // Esta función recibe las coordenadas del mapa y actualiza el estado
   const handleCoordinatesChange = (lat, lng) => {
@@ -52,12 +55,12 @@ const Cart = () => {
   // Cargar datos del carrito
   useEffect(() => {
     loadCartData();
-  }, [id]);
+  }, [userId]);
 
   const loadCartData = async () => {
     try {
       setLoading(true);
-      const { cart } = await cartService.getUserCart(id);
+      const { cart } = await cartService.getUserCart(userId);
       const product = await cartService.getCartProductsDetails(cart);
 
       setCartItems(product);
@@ -161,22 +164,42 @@ const Cart = () => {
   };
 
   const rentalDays = calculateRentalDays();
-
   const AddToRented = async (store) => {
     const productToRented = {
       product: cartItems,
       dates: {
-        dateInit: rentalDates.startDate,
+        dateInit: Date(rentalDates.startDate),
         dateEnd: rentalDates.endDate,
       },
+      reference: "reference",
+      notes: [
+        {
+          by: userId,
+          date: Date.now(),
+          note: "fdfdf",
+        },
+      ],
+      days: rentalDays,
+      total: parseFloat(calculateTotal().toFixed(2)),
       state: "iniciado",
-      ubicación: [coordinates.lat, coordinates.lng],
-      carInit: checkV,
-      Client: id,
-      store: "storeID"
-      
+      location: [coordinates.lat, coordinates.lng],
+      carInit: {
+        required: checkV,
+      },
+      cartEnd: {
+         required: checkV,
+      },
+      client: userId,
+      store: cartItems[0].store,
     };
-    await cartService.createRented(productToRented,id);
+    const rented = await rentedServices.createRented(
+      productToRented,
+      userId,
+      cartItems[0].store
+    );
+    if (rented == true) {
+      navigate(`/my_profile/${userId}/rented`);
+    }
   };
 
   if (loading) return <Typography>Cargando carrito...</Typography>;
@@ -301,7 +324,7 @@ const Cart = () => {
               rentalDays={rentalDays}
               removeFromCart={removeFromCart} // ← SIN paréntesis
               subtotal={calculateTotal().toFixed(2)}
-              userId={id} // ← Asegúrate de pasar userId si lo necesitas
+              userId={userId} // ← Asegúrate de pasar userId si lo necesitas
             />
           </Grid>
           <Grid item size={{ xs: 12, md: 6 }}>
@@ -332,7 +355,7 @@ const Cart = () => {
                   label="Referencia"
                   multiline
                   rows={1}
-                  value={rentalDates.note}
+                  value={rentalDates.reference}
                   onChange={(e) => handleDateChange("note", e.target.value)}
                   placeholder="Referecnia de ubicación"
                   variant="outlined"
@@ -351,6 +374,7 @@ const Cart = () => {
                         <Typography variant="body2" fontWeight="bold">
                           📊 Resumen del período:
                         </Typography>
+                        <br />
                         <Typography variant="body2">
                           <strong>
                             {rentalDays} día{rentalDays !== 1 ? "s" : ""}
@@ -388,7 +412,15 @@ const Cart = () => {
                   placeholder="Verifique la fecha y hora de entrega de la tienda"
                   variant="outlined"
                 />
-                <Button fullWidth>Realizar Pedido</Button>
+                <Button
+                  onClick={() => AddToRented()}
+                  sx={{
+                    borderInline: 2,
+                  }}
+                  fullWidth
+                >
+                  Realizar Pedido
+                </Button>
               </CardContent>
             </Card>
           </Grid>

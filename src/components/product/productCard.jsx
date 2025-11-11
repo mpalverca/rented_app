@@ -28,6 +28,7 @@ export default function ProductCard({
   favorites,
   handleProductClick
 }) {
+  console.log(product)
     const navigate = useNavigate();
    // Navegar a la tienda
     const handleStoreClick = (storeId, e) => {
@@ -144,7 +145,7 @@ export default function ProductCard({
       <CardMedia
         component="img"
         height="200"
-        image={product.image[0]}
+        image={product?.image.length==0?"https://ih1.redbubble.net/image.1861339560.3228/raf,360x360,075,t,fafafa:ca443f4786.jpg":product?.image[0]}
         alt={product.nombre}
         sx={{ objectFit: "cover" }}
       />

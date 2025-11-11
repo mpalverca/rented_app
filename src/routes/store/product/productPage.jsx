@@ -44,7 +44,9 @@ export default function ProductPage() {
     try {
       setLoading(true);
       setError("");
-      const itemData = await productService.getProductItemById(params.id);
+      const itemData = await productService.getProductItemById(
+        params.productId
+      );
       setProduct(itemData);
     } catch (err) {
       console.error("Error cargando producto:", err);
@@ -63,7 +65,11 @@ export default function ProductPage() {
         return;
       }
 
-      await productService.addProductToCart(params.id, user.uid, product.store);
+      await productService.addProductToCart(
+        params.productId,
+        user.uid,
+        product.store
+      );
       handleOpenDialog();
     } catch (err) {
       console.error("Error agregando al carrito:", err);
@@ -180,7 +186,7 @@ export default function ProductPage() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 2 }}>
       <Grid container spacing={4}>
         {/* Columna de Imagen */}
         <Grid item size={{ xs: 12, md: 6 }}>
@@ -253,7 +259,7 @@ export default function ProductPage() {
             </Box>
 
             {/* Rating */}
-            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
                 {ratingInfo.icon}
                 <Rating
@@ -321,12 +327,12 @@ export default function ProductPage() {
                 <Share />
               </Button>
             </Box>
-{/* Mostrar error del carrito */}
-      {cartError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {cartError}
-        </Alert>
-      )}
+            {/* Mostrar error del carrito */}
+            {cartError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {cartError}
+              </Alert>
+            )}
             {/* Información de Disponibilidad */}
             <Alert
               severity={product.isActive ? "success" : "warning"}
@@ -340,8 +346,8 @@ export default function ProductPage() {
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 6 }}>
-        <Divider sx={{ mb: 4 }} />
+      <Box sx={{ mt: 2 }}>
+        <Divider sx={{ mb: 1 }} />
         <Typography variant="h5" gutterBottom>
           Información del Producto
         </Typography>
@@ -351,7 +357,7 @@ export default function ProductPage() {
       </Box>
 
       {/* Sección de Rating y Calificaciones */}
-      <Box sx={{ mt: 6 }}>
+      <Box sx={{ mt: 2,pb:2 }}>
         <Typography
           variant="h4"
           component="h2"
@@ -360,7 +366,13 @@ export default function ProductPage() {
         >
           Calificaciones y Opiniones
         </Typography>
-        <RatingDetail ratingInfo={ratingInfo} />
+        {product.rate.good == 0 &&
+        product.rate.medio == 0 &&
+        product.rate.bad == 0 ? (
+          <div>no hay valor de calificación</div>
+        ) : (
+          <RatingDetail ratingInfo={ratingInfo} />
+        )}
       </Box>
 
       {/* Diálogo de confirmación */}

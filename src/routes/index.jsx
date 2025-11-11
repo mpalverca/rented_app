@@ -17,6 +17,9 @@ import Profile from "./profile/Profile";
 import Cart from "./profile/cart";
 import StorePage from "./store/StorePage";
 import Horarios from "./store/product/timer/horarios";
+import RentedPage from "./profile/rented/rentedPage";
+import RentedStore from "./store/rented/rented";
+import RentedDetail from "./profile/rented/rentedDetail";
 
 export default class index extends Component {
   render() {
@@ -53,7 +56,7 @@ export default class index extends Component {
             <Route path="/rented_app" element={<Home />} />
             <Route path="/create_store" element={<CreateStore />} />
             <Route
-              path="/my_store/:id/*"
+              path="/my_store/:storeId/*"
               element={
                 <ProtectedRoute>
                   <HomeStore />
@@ -62,26 +65,25 @@ export default class index extends Component {
             >
               <Route path="inventary" element={<Inventary />} />
               <Route path="timer" element={<Horarios />} />
+              <Route path="rented" element={<RentedStore />} />
             </Route>
             <Route
-              path="/my_profile/:id/*"
+              path="/my_profile/:userId/*"
               element={
                 <ProtectedRoute>
                   <Profile />
                 </ProtectedRoute>
               }
-            ></Route>
-            <Route
-              path="/my_cart/:id"
-              element={
-                <ProtectedRoute>
-                  <Cart />
-                </ProtectedRoute>
-              }
-            />
+            >
+              <Route path="my_cart" element={<Cart />} />
+               <Route path="rented" element={<RentedPage />} />
+               
+              <Route path="rented/rented_detail/:rentedId" element={<RentedDetail />} />
+            </Route>
+
             <Route path="*" element={<NotFoud />} />
-             <Route path="/store/:id/*" element={<StorePage />} />
-            <Route path="/product/:id" element={<ProductPage />} />
+            <Route path="/store/:storeId/*" element={<StorePage />} />
+            <Route path="/product/:productId" element={<ProductPage />} />
 
             {/*    //auth*/}
           </Routes>

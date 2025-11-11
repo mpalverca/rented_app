@@ -61,6 +61,7 @@ async getCartProductsDetails (productIds = []) {
           price:productSnap.data().price,
           image:productSnap.data().image[0],
           store:productSnap.data().store,
+          quantity:1
         };
       }
       return null;
@@ -89,26 +90,5 @@ async deleteProductCart  (userId, productId) {
     throw error;
   }
 },
- async createRented(productData, userId, storeId) {
-    try {
-      const storeWithOwner = {
-        ...productData,
-        store: storeId,
-        addby: userId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      const docRef = await addDoc(collection(db, "Products"), storeWithOwner);
-      console.log("✅ [creaste Producto] Producto creado con ID:", docRef.id);
-      return { id: docRef.id, ...storeWithOwner };
-    } catch (error) {
-      console.error("❌ [createStore] Error creando producto:", error);
-      throw new Error("No se pudo crear el producto: " + error.message);
-    }
-  },
-
-
-
-
 
 }

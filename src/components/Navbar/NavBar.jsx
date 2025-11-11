@@ -38,7 +38,7 @@ export default function ResponsiveNavBar() {
 
   const userSettings = [
     { name: "Perfil", path: `/my_profile/${user?.uid}` },
-    { name: "Pedidos", path: `/my_cart/${user?.uid}` },    
+    { name: "Pedidos", path: `/my_profile/${user?.uid}/my_cart` },    
     { name: "Servicios", path: "/my_services" },
     { name: "Mi Tienda", path: `/my_store/${userData?.store}` },
   ];

@@ -8,6 +8,7 @@ import {
   Pagination,
   CircularProgress,
   Alert,
+  Stack,
 } from "@mui/material";
 
 import { useNavigate } from "react-router-dom";
@@ -19,7 +20,7 @@ import { useInfiniteProducts } from "../../components/product/infinityScroll";
 
 const Home = () => {
   const navigate = useNavigate();
- // const [products, setProducts] = useState([]);
+  // const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   //const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -29,19 +30,18 @@ const Home = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [favorites, setFavorites] = useState(new Set());
   const [categories, setCategories] = useState(["all"]);
-  const productsPerPage = 6;
+  const productsPerPage = 12;
 
-   const { 
-      products, 
-      loading, 
-      loadingMore, 
-      hasMore, 
-      error: productsError,
-      refresh 
-    } = useInfiniteProducts();
-console.log(products)
+  const {
+    products,
+    loading,
+    loadingMore,
+    hasMore,
+    error: productsError,
+    refresh,
+  } = useInfiniteProducts();
   // Cargar productos
- /*  const loadProducts = async () => {
+  /*  const loadProducts = async () => {
     try {
       setLoading(true);
       setError("");
@@ -136,13 +136,10 @@ console.log(products)
   // Filtros y búsqueda
   useEffect(() => {
     if (products.length === 0) return;
-
-
-
     let filtered = [...products];
 
     // Filtro por búsqueda
-   /*  if (searchTerm) {
+    /*  if (searchTerm) {
       filtered = filtered.filter(
         (product) =>
           product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -218,10 +215,8 @@ console.log(products)
     navigate(`/product/${productId}`);
   };
 
- 
-
   return (
-    <Box  sx={{ py: 2, px:2}}>
+    <Box sx={{ py: 2, px: 2 }}>
       {/* Hero Section */}
       <Box
         sx={{
@@ -276,7 +271,7 @@ console.log(products)
         </Alert>
       ) : (
         <>
-          <Grid container spacing={3}  sx={{pt:2}}>
+          <Grid container spacing={3} sx={{ pt: 2 }}>
             {currentProducts.map((product) => (
               <Grid item size={{ xs: 12, sm: 6, md: 2 }} key={product.id}>
                 {/* ✅ CORRECTO: Pasar todas las props correctamente */}
@@ -286,7 +281,6 @@ console.log(products)
                   handleProductClick={handleProductClick} // ✅ Pasar función
                   toggleFavorite={toggleFavorite} // ✅ Pasar función
                   favorites={favorites} // ✅ Pasar Set
-                 
                 />
               </Grid>
             ))}

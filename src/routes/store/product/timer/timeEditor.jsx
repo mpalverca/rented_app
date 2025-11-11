@@ -11,8 +11,7 @@ export default function TimeEditor({
   
 
 }) {
-    console.log(schedule)
-    console.log("dat")
+
   return (
     <Paper elevation={1} sx={{ p: 2 }}>
       <Typography

@@ -30,15 +30,15 @@ export default function Home() {
   );
 
   useEffect(() => {
-    if (params.id) {
+    if (params.storeId) {
       loadItem();
     }
-  }, [params.id]);
+  }, [params.storeId]);
 
   const loadItem = async () => {
     try {
       setLoading(true);
-      const itemData = await  storeService.getStoreItemById(params.id);
+      const itemData = await  storeService.getStoreItemById(params.storeId);
       setStore(itemData);
     } catch (err) {
       console.error('Error cargando item:', err);
