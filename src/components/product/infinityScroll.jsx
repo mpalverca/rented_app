@@ -74,7 +74,78 @@ export const useInfiniteProductsStore = () => {
     loadMore: loadMoreProducts
   };
 };
+export const useInfiniteProductsExtra = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [lastVisible, setLastVisible] = useState(null);
+  const [error, setError] = useState(null);
 
+  // Cargar primera página
+  const loadInitialProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const result = await productService.getProductItemsPaginatedExtra();
+      setProducts(result.products);
+      setLastVisible(result.lastVisible);
+      setHasMore(result.hasMore);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Cargar más productos
+  const loadMoreProducts = useCallback(async () => {
+    if (loadingMore || !hasMore || !lastVisible) return;
+    
+    try {
+      setLoadingMore(true);
+      setError(null);
+      
+      const result = await productService.getProductItemsPaginated(lastVisible);
+      setProducts(prev => [...prev, ...result.products]);
+      setLastVisible(result.lastVisible);
+      setHasMore(result.hasMore);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, lastVisible]);
+
+  // Detectar cuando el usuario llega al final de la página
+  const handleScroll = useCallback(() => {
+    if (window.innerHeight + document.documentElement.scrollTop 
+        !== document.documentElement.offsetHeight || loadingMore) {
+      return;
+    }
+    loadMoreProducts();
+  }, [loadingMore, loadMoreProducts]);
+
+  useEffect(() => {
+    loadInitialProducts();
+  }, [loadInitialProducts]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  return {
+    products,
+    loading,
+    loadingMore,
+    hasMore,
+    error,
+    refresh: loadInitialProducts,
+    loadMore: loadMoreProducts
+  };
+};
 export const useInfiniteProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);

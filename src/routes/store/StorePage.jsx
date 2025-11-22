@@ -36,7 +36,7 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 export default function StoreProfile() {
-  const {  storeid } = useParams();
+  const {  storeId } = useParams();
   const navigate = useNavigate();
   const [store, setStore] = useState(null);
   const [products, setProducts] = useState([]);
@@ -45,12 +45,12 @@ export default function StoreProfile() {
   const [error, setError] = useState("");
   
   useEffect(() => {
+   
     const loadStoreData = async () => {
       setLoading(true);
       try {
          setTimeout(() => {
           //setStore(mockStoreData);
-          
           setLoading(false);
         }, 1000);
       } catch (err) {
@@ -59,16 +59,16 @@ export default function StoreProfile() {
         setLoading(false);
       }
     };
-    if (storeid) {
+    if (storeId) {
       loadItem();
     }
     loadStoreData();
-  }, [storeid]);
+  }, [storeId]);
 
   const loadItem = async () => {
     try {
       setLoading(true);
-      const itemData = await storeService.getStoreItem(storeid);
+      const itemData = await storeService.getStoreItem(storeId);
       setStore(itemData);
     } catch (err) {
       console.error("Error cargando item:", err);

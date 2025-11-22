@@ -20,6 +20,8 @@ import Horarios from "./store/product/timer/horarios";
 import RentedPage from "./profile/rented/rentedPage";
 import RentedStore from "./store/rented/rented";
 import RentedDetail from "./profile/rented/rentedDetail";
+import RentedDetailStore from "./store/rented/rentedDetail";
+import Stores from "./stores";
 
 export default class index extends Component {
   render() {
@@ -66,6 +68,10 @@ export default class index extends Component {
               <Route path="inventary" element={<Inventary />} />
               <Route path="timer" element={<Horarios />} />
               <Route path="rented" element={<RentedStore />} />
+              <Route
+                path="rented/rented_detail/:rentedId"
+                element={<RentedDetailStore />}
+              />
             </Route>
             <Route
               path="/my_profile/:userId/*"
@@ -76,15 +82,17 @@ export default class index extends Component {
               }
             >
               <Route path="my_cart" element={<Cart />} />
-               <Route path="rented" element={<RentedPage />} />
-               
-              <Route path="rented/rented_detail/:rentedId" element={<RentedDetail />} />
+              <Route path="rented" element={<RentedPage />} />
+              <Route
+                path="rented/rented_detail/:rentedId"
+                element={<RentedDetail />}
+              />
             </Route>
-
             <Route path="*" element={<NotFoud />} />
-            <Route path="/store/:storeId/*" element={<StorePage />} />
-            <Route path="/product/:productId" element={<ProductPage />} />
 
+            <Route path="/stores" element={<Stores />} />
+           <Route path="/store/:storeId/*" element={<StorePage />} />
+            <Route path="/product/:productId" element={<ProductPage />} />
             {/*    //auth*/}
           </Routes>
         </Router>

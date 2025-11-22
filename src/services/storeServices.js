@@ -138,6 +138,21 @@ export const storeService = {
       console.error("Error obteniendo item del store:", error);
       throw error;
     }
+  },
+  async getAllStores(){
+    try {
+      const storeDoc = collection(db,"stores");
+      const storeSnap = await getDocs(storeDoc);
+      const storeList = storeSnap.docs.map(doc=>(
+        {
+          id: doc.id,
+          ...doc.data()
+        }
+      ));
+      return storeList;
+    }catch(error){
+      console.log("error:",error)
+    }
   }
 };
 

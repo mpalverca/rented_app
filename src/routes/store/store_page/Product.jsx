@@ -1,34 +1,41 @@
-import React,{useEffect,useState} from "react";
-import { Grid,Typography,Card,CardMedia,CardContent,Rating,Box,Button,Alert, Container, CircularProgress } from "@mui/material";
-
+import React, { useEffect, useState } from "react";
 import {
-  ShoppingCart,
-} from "@mui/icons-material";
+  Grid,
+  Typography,
+  Card,
+  CardMedia,
+  CardContent,
+  Rating,
+  Box,
+  Button,
+  Alert,
+  Container,
+  CircularProgress,
+} from "@mui/material";
+
+import { ShoppingCart } from "@mui/icons-material";
 import { useInfiniteProductsStore } from "../../../components/product/infinityScroll";
 import { useNavigate, useParams } from "react-router-dom";
 
-
-export default function ProductStore({handleAddToCart,handleProductClick}) {
+export default function ProductStore({ handleAddToCart, handleProductClick }) {
   const { storeId: id } = useParams();
   const navigate = useNavigate();
 
-
   const [error, setError] = useState("");
-    const { 
-    products, 
-    loading, 
-    loadingMore, 
-    hasMore, 
+  const {
+    products,
+    loading,
+    loadingMore,
+    hasMore,
     error: productsError,
-    refresh 
+    refresh,
   } = useInfiniteProductsStore();
 
-useEffect(() => {
+  useEffect(() => {
     const loadStoreData = async () => {
       try {
         // Cargar datos de la tienda
         // const storeData = await storeService.getStoreById(storeId);
-
       } catch (err) {
         console.error("Error cargando tienda:", err);
         setError("Error cargando información de la tienda");
@@ -37,7 +44,7 @@ useEffect(() => {
 
     loadStoreData();
   }, [id]);
-    if (loading) {
+  if (loading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4, textAlign: "center" }}>
         <CircularProgress />
@@ -47,7 +54,7 @@ useEffect(() => {
       </Container>
     );
   }
-    return (
+  return (
     <>
       <Typography
         variant="h5"
@@ -101,7 +108,7 @@ useEffect(() => {
                   </Typography>
                 </Box>
 
-               {/*  <Typography variant="body2" color="text.secondary" gutterBottom>
+                {/*  <Typography variant="body2" color="text.secondary" gutterBottom>
                   {product.category}
                 </Typography> */}
 
@@ -127,7 +134,7 @@ useEffect(() => {
                     ${product.price}/día
                   </Typography>
 
-                {/*   <Button
+                  {/*   <Button
                     size="small"
                     startIcon={<ShoppingCart />}
                     onClick={() => handleAddToCart(product)}

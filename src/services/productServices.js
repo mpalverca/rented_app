@@ -11,9 +11,10 @@ import {
   deleteDoc,
   arrayUnion,
   limit,
-  startAfter
+  startAfter,
 } from "firebase/firestore";
 import { db } from "../firebase/config";
+import { data } from "react-router-dom";
 
 export const productService = {
   async createProduct(productData, userId, storeId) {
@@ -166,7 +167,7 @@ export const productService = {
       );
     }
   },
-  async getProductItemsPaginated(lastVisible = null,storeId) {
+  async getProductItemsPaginated(lastVisible = null, storeId) {
     const PAGE_SIZE = 10;
     try {
       let q;
@@ -175,7 +176,7 @@ export const productService = {
         // Si hay un último documento visible, empezar después de él
         q = query(
           collection(db, "Products"),
-         where("store", "==", storeId),
+          where("store", "==", storeId),
           where("extra", "==", false),
           orderBy("name"), // Necesitas ordenar por algún campo para la paginación
           startAfter(lastVisible),
@@ -202,8 +203,6 @@ export const productService = {
         });
         lastDoc = doc; // Guardar el último documento para la próxima paginación
       });
-
-      console.log("Productos paginados:", items.length);
       return {
         products: items,
         lastVisible: lastDoc,
@@ -214,6 +213,172 @@ export const productService = {
       throw error;
     }
   },
+  async getProductItemsPaginatedExtra(lastVisible = null, storeId) {
+    const PAGE_SIZE = 10;
+    try {
+      let q;
+
+      if (lastVisible) {
+        // Si hay un último documento visible, empezar después de él
+        q = query(
+          collection(db, "Products"),
+          where("store", "==", storeId),
+          where("extra", "==", true),
+          orderBy("name"), // Necesitas ordenar por algún campo para la paginación
+          startAfter(lastVisible),
+          limit(PAGE_SIZE)
+        );
+      } else {
+        // Primera página
+        q = query(
+          collection(db, "Products"),
+          where("extra", "==", true),
+          orderBy("name"),
+          limit(PAGE_SIZE)
+        );
+      }
+
+      const querySnapshot = await getDocs(q);
+      const items = [];
+      let lastDoc = null;
+
+      querySnapshot.forEach((doc) => {
+        items.push({
+          id: doc.id,
+          ...doc.data(),
+        });
+        lastDoc = doc; // Guardar el último documento para la próxima paginación
+      });
+      console.log(items)
+      return {
+        products: items,
+        lastVisible: lastDoc,
+        hasMore: items.length === PAGE_SIZE, // Si hay más productos por cargar
+      };
+    } catch (error) {
+      console.error("Error obteniendo productos paginados:", error);
+      throw error;
+    }
+  },
+   async productScroll(storeId, lastDoc = null, searchTerm = "", category = "") {
+    try {
+      const productRef = collection(db, "Products");
+      
+      // Construir la consulta base
+      let constraints = [];
+      
+      // Filtro por tienda
+      if (storeId) {
+        constraints.push(where("store", "==", storeId));
+      }
+      
+      // Filtro por categoría
+      if (category && category !== "all") {
+        constraints.push(where("category", "==", category));
+      }
+      
+      // Ordenamiento por fecha de creación (para paginación consistente)
+      constraints.push(orderBy("createdAt", "desc"));
+      
+      // Paginación
+      if (lastDoc) {
+        constraints.push(startAfter(lastDoc));
+      }
+      
+      constraints.push(limit(PAGE_SIZE));
+      
+      const q = query(productRef, ...constraints);
+      const snapshot = await getDocs(q);
+      
+      // Si hay término de búsqueda, filtrar localmente
+      let productList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      
+      // Aplicar filtro de búsqueda por nombre si existe
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        productList = productList.filter(product => 
+          product.name?.toLowerCase().includes(searchLower) ||
+          product.description?.toLowerCase().includes(searchLower) ||
+          product.tags?.some(tag => tag.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      const lastVisible = snapshot.docs[snapshot.docs.length - 1];
+      const hasMore = snapshot.docs.length === PAGE_SIZE;
+      
+      return {
+        productList: productList,
+        lastDoc: lastVisible,
+        hasMore: hasMore,
+      };
+    } catch (error) {
+      console.error("Error cargando productos:", error);
+      throw error;
+    }
+  },
+
+  // Método para búsqueda con infinite scroll
+  async searchProducts(storeId, searchTerm, category = "", lastDoc = null) {
+    try {
+      const productRef = collection(db, "Products");
+      
+      let constraints = [];
+      
+      // Filtro por tienda
+      if (storeId) {
+        constraints.push(where("store", "==", storeId));
+      }
+      
+      // Filtro por categoría
+      if (category && category !== "all") {
+        constraints.push(where("category", "==", category));
+      }
+      
+      // Para búsquedas, podrías usar array-contains si tienes tags
+      // o hacer filtrado local como en el ejemplo anterior
+      
+      constraints.push(orderBy("createdAt", "desc"));
+      
+      if (lastDoc) {
+        constraints.push(startAfter(lastDoc));
+      }
+      
+      constraints.push(limit(PAGE_SIZE));
+      
+      const q = query(productRef, ...constraints);
+      const snapshot = await getDocs(q);
+      
+      let productList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      
+      // Filtrado local para búsqueda (si no usas índices de Firestore)
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        productList = productList.filter(product =>
+          product.name?.toLowerCase().includes(searchLower) ||
+          product.description?.toLowerCase().includes(searchLower) ||
+          product.tags?.some(tag => tag.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      const lastVisible = snapshot.docs[snapshot.docs.length - 1];
+      const hasMore = snapshot.docs.length === PAGE_SIZE;
+      
+      return {
+        productList: productList,
+        lastDoc: lastVisible,
+        hasMore: hasMore,
+      };
+    } catch (error) {
+      console.error("Error en búsqueda de productos:", error);
+      throw error;
+    }
+  }
 };
 // Tamaño de página - cuántos productos cargar por vez
 const PAGE_SIZE = 10;
@@ -221,7 +386,7 @@ const PAGE_SIZE = 10;
 export const getProductItemsPaginated = async (lastVisible = null) => {
   try {
     let q;
-    
+
     if (lastVisible) {
       // Si hay un último documento visible, empezar después de él
       q = query(
@@ -257,7 +422,7 @@ export const getProductItemsPaginated = async (lastVisible = null) => {
     return {
       products: items,
       lastVisible: lastDoc,
-      hasMore: items.length === PAGE_SIZE // Si hay más productos por cargar
+      hasMore: items.length === PAGE_SIZE, // Si hay más productos por cargar
     };
   } catch (error) {
     console.error("Error obteniendo productos paginados:", error);

@@ -22,51 +22,58 @@ import {
 import { useNavigate } from "react-router-dom";
 
 export default function ProductCard({
- 
   product,
   toggleFavorite,
   favorites,
-  handleProductClick
+  handleProductClick,
 }) {
-  console.log(product)
-    const navigate = useNavigate();
-   // Navegar a la tienda
-    const handleStoreClick = (storeId, e) => {
-      e.stopPropagation();
-      navigate(`/store/${storeId}`);
-    };
+  console.log(product);
+  const navigate = useNavigate();
+  // Navegar a la tienda
+  const handleStoreClick = (storeId, e) => {
+    e.stopPropagation();
+    navigate(`/store/${storeId}`);
+  };
   // Función para calcular el rating basado en product.rate
   const calculateRating = (rate) => {
-    if (!rate || typeof rate !== 'object') {
-      return { rating: 0, sentiment: 'Sin calificaciones', icon: <SentimentSatisfied /> };
+    if (!rate || typeof rate !== "object") {
+      return {
+        rating: 0,
+        sentiment: "Sin calificaciones",
+        icon: <SentimentSatisfied />,
+      };
     }
 
     const { good = 0, medium = 0, bad = 0 } = rate;
     const totalVotes = good + medium + bad;
-    
+
     if (totalVotes === 0) {
-      return { rating: 0, sentiment: 'Sin calificaciones', icon: <SentimentSatisfied /> };
+      return {
+        rating: 0,
+        sentiment: "Sin calificaciones",
+        icon: <SentimentSatisfied />,
+      };
     }
 
     // Calcular puntuación (0-5)
     // good = 5 puntos, medium = 3 puntos, bad = 1 punto
-    const totalScore = (good * 5) + (medium * 3) + (bad * 1);
+    const totalScore = good * 5 + medium * 3 + bad * 1;
     const averageRating = totalScore / totalVotes;
     const normalizedRating = (averageRating / 5) * 5; // Normalizar a escala 0-5
 
     // Determinar sentimiento basado en el rating
     let sentiment, icon;
     if (normalizedRating >= 4) {
-      sentiment = 'Excelente';
+      sentiment = "Excelente";
       icon = <SentimentVerySatisfied color="success" />;
     } else if (normalizedRating >= 3) {
-      sentiment = 'Bueno';
+      sentiment = "Bueno";
       icon = <SentimentSatisfied color="info" />;
     } else if (normalizedRating >= 2) {
-      sentiment = 'Regular';
+      sentiment = "Regular";
       icon = <SentimentSatisfied color="warning" />;
     } else {
-      sentiment = 'Malo';
+      sentiment = "Malo";
       icon = <SentimentDissatisfied color="error" />;
     }
 
@@ -74,12 +81,12 @@ export default function ProductCard({
       rating: Math.min(5, Math.max(0, normalizedRating)), // Asegurar entre 0-5
       sentiment,
       icon,
-      totalVotes
+      totalVotes,
     };
   };
 
   const ratingInfo = calculateRating(product.rate);
-  
+
   return (
     <Card
       sx={{
@@ -145,14 +152,18 @@ export default function ProductCard({
       <CardMedia
         component="img"
         height="200"
-        image={product?.image.length==0?"https://ih1.redbubble.net/image.1861339560.3228/raf,360x360,075,t,fafafa:ca443f4786.jpg":product?.image[0]}
+        image={
+          product?.image.length == 0
+            ? "https://ih1.redbubble.net/image.1861339560.3228/raf,360x360,075,t,fafafa:ca443f4786.jpg"
+            : product?.image[0]
+        }
         alt={product.nombre}
         sx={{ objectFit: "cover" }}
       />
 
       <CardContent sx={{ flexGrow: 1, p: 2 }}>
         {/* Categoría */}
-       {/*  <Chip
+        {/*  <Chip
           label={product.category}
           size="small"
           color="primary"
@@ -170,16 +181,18 @@ export default function ProductCard({
           {product.name}
         </Typography>
         {/* Rating con carita */}
-        <Tooltip 
-          title={`${ratingInfo.sentiment} • ${ratingInfo.totalVotes || 0} votos`}
+        <Tooltip
+          title={`${ratingInfo.sentiment} • ${
+            ratingInfo.totalVotes || 0
+          } votos`}
           arrow
         >
           <Box sx={{ display: "flex", alignItems: "center", mb: 2, gap: 1 }}>
             {/* Icono de sentimiento */}
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               {ratingInfo.icon}
             </Box>
-            
+
             {/* Rating numérico */}
             <Rating
               value={ratingInfo.rating}
@@ -187,7 +200,7 @@ export default function ProductCard({
               size="small"
               readOnly
             />
-            
+
             {/* Texto del rating */}
             <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
               ({ratingInfo.rating.toFixed(1)})
@@ -196,7 +209,7 @@ export default function ProductCard({
         </Tooltip>
 
         {/* Información de la Tienda */}
-      {/*   <Chip
+        {/*   <Chip
         label={product.tienda.nombre}
         icon={ <Store fontSize="small" sx={{ mr: 1, color: "primary.main" }} />
          }
@@ -216,7 +229,7 @@ export default function ProductCard({
      */}
 
         {/* Tags */}
-       {/*  <Box sx={{ mb: 2, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+        {/*  <Box sx={{ mb: 2, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
           {product.tags &&
             product.tags
               .slice(0, 3)
@@ -239,7 +252,7 @@ export default function ProductCard({
             alignItems: "center",
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
             <Typography
               variant="h6"
               color="primary"
@@ -251,7 +264,7 @@ export default function ProductCard({
               /día
             </Typography>
           </Box>
-          <Chip label={product.condition}/>
+          <Chip label={product.condition} />
 
           {/* <Button
             variant="contained"

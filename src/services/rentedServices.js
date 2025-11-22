@@ -15,6 +15,14 @@ import {
 import { db } from "../firebase/config";
 import { data } from "react-router-dom";
 
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
 const rentedServices = {
   async createRented(productData, userId, storeId) {
     try {
@@ -172,7 +180,7 @@ const rentedServices = {
       }
       const q = query(collection(db, "rented"), where("store", "==", storeId));
 
-      const  querySnapshot = await getDocs(q);
+      const querySnapshot = await getDocs(q);
       const items = [];
 
       const rentedPromises = querySnapshot.docs.map(async (docSnap) => {
@@ -184,21 +192,19 @@ const rentedServices = {
           // Obtener información de la tienda - ✅ CORREGIDO
           const userRef = doc(db, "users", rentedData.client);
           const userDoc = await getDoc(userRef);
-   //        console.log("Datos de la tienda:", userDoc.data());
+          //        console.log("Datos de la tienda:", userDoc.data());
           let userInfo = {};
           if (userDoc.exists()) {
             userInfo = {
               id: userDoc.id,
-              name:
-                userDoc.data().nombre ||
-                userDoc.data().name,
+              name: userDoc.data().nombre || userDoc.data().name,
               ci: userDoc.data().ci || "",
               phone: userDoc.data().phone || "",
               address: userDoc.data().address || "",
               image: userDoc.data().image || "",
-              rate: userDoc.data().review.review|| 0,
+              rate: userDoc.data().review.review || 0,
             };
-          } 
+          }
 
           return {
             id: docSnap.id,
@@ -229,19 +235,187 @@ const rentedServices = {
           };
         }
       });
-/* console.log(rentedPromises)
+      /* console.log(rentedPromises)
        querySnapshot.forEach((doc) => {
         items.push({
           id: doc.id,
           ...rentedPromises
         });
       }); */
- const itemsWithStoreInfo = await Promise.all(rentedPromises);
-     console.log(itemsWithStoreInfo)
- return itemsWithStoreInfo;
+      const itemsWithStoreInfo = await Promise.all(rentedPromises);
+
+      return itemsWithStoreInfo;
     } catch (error) {
       console.error("Error obteniendo items por categoría:", error);
       throw error;
+    }
+  },
+  async addNoteRented(rentedId, note) {
+    try {
+      const rentedRef = doc(db, "rented", rentedId);
+      await updateDoc(rentedRef, {
+        notes: arrayUnion(note),
+      });
+    } catch (error) {
+      console.error("error agregando nota;", error);
+    }
+  },
+  async addproductRented(rentedId, product, store) {
+    try {
+      const rentedRef = doc(db, "rented", rentedId);
+      await updateDoc(rentedRef, {
+        product: arrayUnion(product),
+        note: arrayUnion({
+          by: store,
+          date: new Date(),
+          note: `Se ha agregado un nuevo producto de alquiler ${product.name}`,
+        }),
+      });
+    } catch (error) {
+      console.error("error agregando nota;", error);
+    }
+  },
+  async acceptRented(rentedId, products, storeName) {
+    try {
+      const rentedRef = doc(db, "rented", rentedId);
+
+      // Preparar los datos para la actualización
+      const updateData = {
+        state: "aceptado",
+        updatedAt: new Date(),
+      };
+
+      // Si hay productos editados, actualizar el array de productos
+      if (products && products.length > 0) {
+        updateData.product = products; // Reemplaza todo el array de productos
+      }
+
+      // Agregar la nota de aceptación
+      if (storeName) {
+        updateData.notes = arrayUnion({
+          id: Date.now().toString(),
+          note: "El pedido ha sido aceptado por la tienda",
+          by: storeName,
+          date: new Date().toISOString(),
+        });
+      }
+
+      // Ejecutar la actualización en Firebase
+      await updateDoc(rentedRef, updateData);
+
+      console.log("Pedido aceptado exitosamente");
+      return { success: true, message: "Pedido aceptado correctamente" };
+    } catch (error) {
+      console.error("Error al aceptar el pedido:", error);
+      return {
+        success: false,
+        message: "Error al aceptar el pedido: " + error.message,
+      };
+    }
+  },
+  async changeDatesRented(rentedId, dates, days, storeName, motivo) {
+    try {
+      const rentedRef = doc(db, "rented", rentedId);
+      // Preparar los datos para la actualización
+      const updateData = {
+        state: "aceptado",
+        dates: dates,
+        days: days,
+      };
+      // Agregar la nota de aceptación
+      if (storeName) {
+        updateData.notes = arrayUnion({
+          id: Date.now().toString(),
+          note:
+            "la fecha ha sido cambiada de fecha" +
+            formatDate(dates.datesInit) +
+            "a la fecha" +
+            formatDate(dates.dateEnd) +
+            "con los dias" +
+            days +
+            ",por motivo de" +
+            motivo,
+          by: storeName,
+          date: new Date().toISOString(),
+        });
+      }
+      // Ejecutar la actualización en Firebase
+      await updateDoc(rentedRef, updateData);
+
+      console.log("Pedido aceptado exitosamente");
+      return { success: true, message: "Pedido aceptado correctamente" };
+    } catch (error) {
+      console.error("Error al aceptar el pedido:", error);
+      return {
+        success: false,
+        message: "Error al aceptar el pedido: " + error.message,
+      };
+    }
+  },
+  async addCarInRented(rentedId, carInit, storeName, motivo) {
+    try {
+      const rentedRef = doc(db, "rented", rentedId);
+      // Preparar los datos para la actualización
+      const updateData = {
+        carInt: carInit,
+      };
+      // Agregar la nota de aceptación
+      if (storeName) {
+        updateData.notes = arrayUnion({
+          id: Date.now().toString(),
+          note:
+            "se ha agregado a" +
+            carInit.own +
+            "para la carrera, con vehiculo de placas" +
+            carInit.placa,
+          by: storeName,
+          date: new Date().toISOString(),
+        });
+      }
+      // Ejecutar la actualización en Firebase
+      await updateDoc(rentedRef, updateData);
+
+      console.log("Pedido aceptado exitosamente");
+      return { success: true, message: "Pedido aceptado correctamente" };
+    } catch (error) {
+      console.error("Error al aceptar el pedido:", error);
+      return {
+        success: false,
+        message: "Error al aceptar el pedido: " + error.message,
+      };
+    }
+  },
+  async addCarOutRented(rentedId, carEnd, storeName, motivo) {
+    try {
+      const rentedRef = doc(db, "rented", rentedId);
+      // Preparar los datos para la actualización
+      const updateData = {
+        carInt: carEnd,
+      };
+      // Agregar la nota de aceptación
+      if (storeName) {
+        updateData.notes = arrayUnion({
+          id: Date.now().toString(),
+          note:
+            "se ha agregado a" +
+            carEnd.own +
+            "para la carrera, con vehiculo de placas" +
+            carEnd.placa,
+          by: storeName,
+          date: new Date().toISOString(),
+        });
+      }
+      // Ejecutar la actualización en Firebase
+      await updateDoc(rentedRef, updateData);
+
+      console.log("Pedido aceptado exitosamente");
+      return { success: true, message: "Pedido aceptado correctamente" };
+    } catch (error) {
+      console.error("Error al aceptar el pedido:", error);
+      return {
+        success: false,
+        message: "Error al aceptar el pedido: " + error.message,
+      };
     }
   },
 };

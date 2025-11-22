@@ -27,7 +27,7 @@ const DEFAULT_POSITION = [-3.996719, -79.2017674];
 
 // Componente para manejar los clicks en el mapa
 const MapView = ({ position,height }) => {
-  console.log(position);
+
   return (
     <Box
       sx={{
@@ -73,15 +73,15 @@ const MapView = ({ position,height }) => {
           />
 
           <Marker position={position}>
-            <Popup>
+           {/*  <Popup>
               <div>
                 <strong>Ubicación seleccionada</strong>
                 <br />
-                Lat: {position.lat.toFixed(6)}
+                Lat: {position.lat.toFixed(6)|| position}
                 <br />
                 Lng: {position.lng.toFixed(6)}
               </div>
-            </Popup>
+            </Popup> */}
           </Marker>
 
           {/* Marker inicial si hay coordenadas */}

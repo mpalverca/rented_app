@@ -15,6 +15,7 @@ import {
   useMediaQuery,
   Avatar,
   CircularProgress,
+  Divider,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useAuth } from "../../context/AuthContext"; // 👈 Importar el contexto
@@ -323,7 +324,7 @@ export default function ResponsiveNavBar() {
                     </Box>
                   </MenuItem>
 
-                  <MenuItem divider />
+                  <Divider />
 
                   {/* Opciones del usuario */}
                   {userSettings.map((setting) => (
@@ -335,8 +336,7 @@ export default function ResponsiveNavBar() {
                     </MenuItem>
                   ))}
 
-                  <MenuItem divider />
-
+                <Divider/>
                   {/* Botón de cerrar sesión */}
                   <MenuItem
                     onClick={handleLogout}
