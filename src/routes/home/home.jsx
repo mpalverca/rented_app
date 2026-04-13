@@ -9,20 +9,19 @@ import {
   CircularProgress,
   Alert,
   Stack,
+  Paper,
 } from "@mui/material";
 
 import { useNavigate } from "react-router-dom";
-import { getAllProductItems } from "../../services/productServices";
+//import { getAllProductItems } from "../../services/productServices";
 import FilterBarHome from "../../components/Navbar/barHome";
 import ProductCard from "../../components/product/productCard";
-import { getStoreNameById } from "../../services/storeServices";
+//import { getStoreNameById } from "../../services/storeServices";
 import { useInfiniteProducts } from "../../components/product/infinityScroll";
 
 const Home = () => {
   const navigate = useNavigate();
-  // const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  //const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -138,26 +137,10 @@ const Home = () => {
     if (products.length === 0) return;
     let filtered = [...products];
 
-    // Filtro por búsqueda
-    /*  if (searchTerm) {
-      filtered = filtered.filter(
-        (product) =>
-          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.descripcion
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          //(product.store?.nombre || "").toLowerCase().includes(searchTerm.toLowerCase()) || // ✅ Buscar en tienda.nombre
-          (product.tags &&
-            product.tags.some((tag) =>
-              tag.toLowerCase().includes(searchTerm.toLowerCase())
-            ))
-      );
-    } */
-
     // Filtro por categoría
     if (categoryFilter !== "all") {
       filtered = filtered.filter(
-        (product) => product.categoria === categoryFilter
+        (product) => product.categoria === categoryFilter,
       );
     }
 
@@ -193,7 +176,7 @@ const Home = () => {
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = filteredProducts.slice(
     indexOfFirstProduct,
-    indexOfLastProduct
+    indexOfLastProduct,
   );
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
@@ -216,9 +199,9 @@ const Home = () => {
   };
 
   return (
-    <Box sx={{ py: 2, px: 2 }}>
+    <Paper elevation={3} sx={{ m: 2, py: 2, px: 2, height:"95vh" }}>
       {/* Hero Section */}
-      <Box
+      {/* <Box
         sx={{
           background: "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)",
           borderRadius: 3,
@@ -229,29 +212,32 @@ const Home = () => {
         }}
       >
         <Typography
-          variant="h3"
+          variant="h4"
           component="h1"
           //gutterBottom
           sx={{ fontWeight: "bold" }}
         >
           ALquiler-CONstrucción
         </Typography>
-        <Typography variant="h5" sx={{ mb: 0, opacity: 0.9 }}>
+        <Typography variant="h6" sx={{ mb: 0, opacity: 0.9 }}>
           Encuentra todo lo que necesitas para alquilar en un solo lugar
         </Typography>
-      </Box>
+      </Box> */}
 
       {/* Filtros y Búsqueda */}
-      {/* <FilterBarHome
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        categoryFilter={categoryFilter}
-        setCategoryFilter={setCategoryFilter}
-        categories={categories}
-        filteredProducts={filteredProducts}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-      /> */}
+      <Box //={{ position: "fixed",display: "flex" }}
+      >
+        <FilterBarHome
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          categoryFilter={categoryFilter}
+          setCategoryFilter={setCategoryFilter}
+          categories={categories}
+          filteredProducts={filteredProducts}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+        />
+      </Box>
 
       {/* Mostrar error si existe */}
       {error && (
@@ -262,7 +248,7 @@ const Home = () => {
 
       {/* Grid de Productos */}
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", pt: 20, pb: 8 }}>
           <CircularProgress size={60} />
         </Box>
       ) : currentProducts.length === 0 ? (
@@ -270,7 +256,7 @@ const Home = () => {
           No se encontraron productos que coincidan con tu búsqueda.
         </Alert>
       ) : (
-        <>
+        <Box sx={{height:"80vh"}} >
           <Grid container spacing={3} sx={{ pt: 2 }}>
             {currentProducts.map((product) => (
               <Grid item size={{ xs: 12, sm: 6, md: 2 }} key={product.id}>
@@ -298,7 +284,7 @@ const Home = () => {
               />
             </Box>
           )}
-        </>
+        </Box>
       )}
 
       {/* Sección de Categorías Populares */}
@@ -332,7 +318,7 @@ const Home = () => {
           </Grid>
         </Box>
       )}
-    </Box>
+    </Paper>
   );
 };
 

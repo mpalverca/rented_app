@@ -313,7 +313,8 @@ const rentedServices = {
       };
     }
   },
-  async changeDatesRented(rentedId, dates, days, storeName, motivo) {
+  async changeDatesRented(rentedId, dates, days, storeName, motivo, note) {
+    console.log(rentedId, dates, days, storeName, motivo);
     try {
       const rentedRef = doc(db, "rented", rentedId);
       // Preparar los datos para la actualización
@@ -325,18 +326,7 @@ const rentedServices = {
       // Agregar la nota de aceptación
       if (storeName) {
         updateData.notes = arrayUnion({
-          id: Date.now().toString(),
-          note:
-            "la fecha ha sido cambiada de fecha" +
-            formatDate(dates.datesInit) +
-            "a la fecha" +
-            formatDate(dates.dateEnd) +
-            "con los dias" +
-            days +
-            ",por motivo de" +
-            motivo,
-          by: storeName,
-          date: new Date().toISOString(),
+          note
         });
       }
       // Ejecutar la actualización en Firebase

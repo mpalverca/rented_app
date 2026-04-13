@@ -4,17 +4,15 @@ import {
   CardContent,
   CardMedia,
   Typography,
-  Button,
   Box,
-  Chip,
   Rating,
   IconButton,
   Tooltip,
+  Skeleton,
 } from "@mui/material";
 import {
   Favorite,
   FavoriteBorder,
-  Store,
   SentimentVerySatisfied,
   SentimentSatisfied,
   SentimentDissatisfied,
@@ -26,42 +24,34 @@ export default function ProductCard({
   toggleFavorite,
   favorites,
   handleProductClick,
+  loading = false,
 }) {
-  console.log(product);
   const navigate = useNavigate();
-  // Navegar a la tienda
-  const handleStoreClick = (storeId, e) => {
-    e.stopPropagation();
-    navigate(`/store/${storeId}`);
+
+  const getProductImage = (image) => {
+    const defaultImage = "https://ih1.redbubble.net/image.1861339560.3228/raf,360x360,075,t,fafafa:ca443f4786.jpg";
+    if (!image) return defaultImage;
+    if (Array.isArray(image) && image.length > 0) return image[0];
+    if (typeof image === "string" && image.trim() !== "") return image;
+    return defaultImage;
   };
-  // Función para calcular el rating basado en product.rate
+
   const calculateRating = (rate) => {
     if (!rate || typeof rate !== "object") {
-      return {
-        rating: 0,
-        sentiment: "Sin calificaciones",
-        icon: <SentimentSatisfied />,
-      };
+      return { rating: 0, sentiment: "Sin calificaciones", icon: <SentimentSatisfied />, totalVotes: 0 };
     }
 
     const { good = 0, medium = 0, bad = 0 } = rate;
     const totalVotes = good + medium + bad;
 
     if (totalVotes === 0) {
-      return {
-        rating: 0,
-        sentiment: "Sin calificaciones",
-        icon: <SentimentSatisfied />,
-      };
+      return { rating: 0, sentiment: "Sin calificaciones", icon: <SentimentSatisfied />, totalVotes: 0 };
     }
 
-    // Calcular puntuación (0-5)
-    // good = 5 puntos, medium = 3 puntos, bad = 1 punto
     const totalScore = good * 5 + medium * 3 + bad * 1;
     const averageRating = totalScore / totalVotes;
-    const normalizedRating = (averageRating / 5) * 5; // Normalizar a escala 0-5
+    const normalizedRating = (averageRating / 5) * 5;
 
-    // Determinar sentimiento basado en el rating
     let sentiment, icon;
     if (normalizedRating >= 4) {
       sentiment = "Excelente";
@@ -78,14 +68,35 @@ export default function ProductCard({
     }
 
     return {
-      rating: Math.min(5, Math.max(0, normalizedRating)), // Asegurar entre 0-5
+      rating: Math.min(5, Math.max(0, normalizedRating)),
       sentiment,
       icon,
       totalVotes,
     };
   };
 
-  const ratingInfo = calculateRating(product.rate);
+  if (loading) {
+    return (
+      <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+        <Skeleton variant="rectangular" height={190} />
+        <CardContent>
+          <Skeleton variant="text" width="80%" />
+          <Skeleton variant="text" width="60%" />
+          <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+            <Skeleton variant="circular" width={20} height={20} />
+            <Skeleton variant="text" width={100} sx={{ ml: 1 }} />
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!product) {
+    return null;
+  }
+
+  const ratingInfo = calculateRating(product?.rate);
+  const productImage = getProductImage(product?.image);
 
   return (
     <Card
@@ -101,10 +112,9 @@ export default function ProductCard({
         cursor: "pointer",
         position: "relative",
       }}
-      onClick={() => handleProductClick(product.id)}
+      onClick={() => handleProductClick(product?.id)}
     >
-      {/* Badge de No Disponible */}
-      {!product.isActive && (
+      {!product?.isActive && (
         <Box
           sx={{
             position: "absolute",
@@ -124,7 +134,6 @@ export default function ProductCard({
         </Box>
       )}
 
-      {/* Botón de Favoritos */}
       <IconButton
         sx={{
           position: "absolute",
@@ -138,151 +147,57 @@ export default function ProductCard({
         }}
         onClick={(e) => {
           e.stopPropagation();
-          toggleFavorite(product.id);
+          toggleFavorite(product?.id);
         }}
       >
-        {favorites.has(product.id) ? (
+        {favorites?.has(product?.id) ? (
           <Favorite color="error" />
         ) : (
           <FavoriteBorder />
         )}
       </IconButton>
 
-      {/* Imagen del Producto */}
       <CardMedia
         component="img"
-        height="200"
-        image={
-          product?.image.length == 0
-            ? "https://ih1.redbubble.net/image.1861339560.3228/raf,360x360,075,t,fafafa:ca443f4786.jpg"
-            : product?.image[0]
-        }
-        alt={product.nombre}
-        sx={{ objectFit: "cover" }}
+        height="190"
+        image={productImage}
+        alt={product?.name || "Producto"}
+        sx={{
+          objectFit: "cover",
+          width: "90%",
+          m: "auto",
+        }}
       />
 
       <CardContent sx={{ flexGrow: 1, p: 2 }}>
-        {/* Categoría */}
-        {/*  <Chip
-          label={product.category}
-          size="small"
-          color="primary"
-          variant="outlined"
-          sx={{ mb: 1 }}
-        /> */}
-
-        {/* Nombre del Producto */}
         <Typography
           variant="body1"
           component="h2"
           gutterBottom
-          sx={{ fontWeight: "bold" }}
+          sx={{ fontWeight: "bold", fontSize: "1rem" }}
         >
-          {product.name}
+          {product?.name || "Sin nombre"}
         </Typography>
-        {/* Rating con carita */}
+
         <Tooltip
-          title={`${ratingInfo.sentiment} • ${
-            ratingInfo.totalVotes || 0
-          } votos`}
+          title={`${ratingInfo.sentiment} • ${ratingInfo.totalVotes} votos`}
           arrow
         >
           <Box sx={{ display: "flex", alignItems: "center", mb: 2, gap: 1 }}>
-            {/* Icono de sentimiento */}
             <Box sx={{ display: "flex", alignItems: "center" }}>
               {ratingInfo.icon}
             </Box>
-
-            {/* Rating numérico */}
             <Rating
               value={ratingInfo.rating}
               precision={0.1}
               size="small"
               readOnly
             />
-
-            {/* Texto del rating */}
-            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+            <Typography variant="body2" color="text.secondary">
               ({ratingInfo.rating.toFixed(1)})
             </Typography>
           </Box>
         </Tooltip>
-
-        {/* Información de la Tienda */}
-        {/*   <Chip
-        label={product.tienda.nombre}
-        icon={ <Store fontSize="small" sx={{ mr: 1, color: "primary.main" }} />
-         }
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            mb: 2,
-            cursor: "pointer",
-            //border:1,
-           background:" #e2dbdaff 30%",
-              "&:hover":  {
-                background: "linear-gradient(45deg, #E64A19 30%, #FBC02D 90%)",
-              },
-          }}
-          onClick={(e) => handleStoreClick(product.tienda.id, e)}
-        />
-     */}
-
-        {/* Tags */}
-        {/*  <Box sx={{ mb: 2, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-          {product.tags &&
-            product.tags
-              .slice(0, 3)
-              .map((tag, index) => (
-                <Chip
-                  key={index}
-                  label={tag}
-                  size="small"
-                  variant="outlined"
-                  sx={{ fontSize: "0.7rem" }}
-                />
-              ))}
-        </Box>
- */}
-        {/* Precio y Botón */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
-            <Typography
-              variant="h6"
-              color="primary"
-              sx={{ fontWeight: "bold" }}
-            >
-              ${product.price.toFixed(2)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              /día
-            </Typography>
-          </Box>
-          <Chip label={product.condition} />
-
-          {/* <Button
-            variant="contained"
-            disabled={!product.isActive}
-            sx={{
-              background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-              "&:hover": {
-                background: "linear-gradient(45deg, #E64A19 30%, #FBC02D 90%)",
-              },
-            }}
-            onClick={(e) => {
-              //e.stopPropagation();
-              // Aquí iría la lógica para agregar al carrito o alquilar
-            }}
-          >
-            {product.isActive ? "Alquilar" : "No Disponible"}
-          </Button> */}
-        </Box>
       </CardContent>
     </Card>
   );

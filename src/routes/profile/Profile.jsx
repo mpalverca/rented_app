@@ -9,37 +9,67 @@ import {
   Box,
   Chip,
   alpha,
+  Divider,
+  Card,
+  CardContent,
+  IconButton,
+  Tooltip,
+  Stack,
+  useTheme,
 } from "@mui/material";
 import {
   Person,
   Edit,
-  Favorite,  
+  Favorite,
+  Email,
+  LocationOn,
+  Phone,
+  CalendarToday,
+  Settings,
+  ExitToApp,
 } from "@mui/icons-material";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Opcion from "./opcions";
 
-// Componente para mostrar ratings con estrellas
+// Componente para mostrar ratings con estrellas mejorado
 const RatingChip = ({ type, count, color }) => (
   <Chip
-    icon={<Favorite sx={{ fontSize: 16 }} />}
+    icon={<Favorite sx={{ fontSize: 14 }} />}
     label={`${count} ${type}`}
     size="small"
     sx={{
-      background: alpha(color, 0.1),
+      background: alpha(color, 0.08),
       color: color,
-      border: `1px solid ${alpha(color, 0.3)}`,
-      fontWeight: "medium",
-      "& .MuiChip-icon": { color: color },
+      border: `1px solid ${alpha(color, 0.2)}`,
+      fontWeight: 500,
+      fontSize: "0.75rem",
+      "& .MuiChip-icon": { 
+        color: color,
+        fontSize: 14,
+      },
     }}
   />
+);
+
+// Componente de información del usuario
+const InfoField = ({ icon, label, value }) => (
+  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+    {icon}
+    <Typography variant="body2" color="text.secondary">
+      {label}:
+    </Typography>
+    <Typography variant="body2" fontWeight={500}>
+      {value || "No especificado"}
+    </Typography>
+  </Box>
 );
 
 export default function Profile() {
   const { user, userData, logout, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
+  const theme = useTheme();
 
   const subRoutes = [
     "partners",
@@ -57,11 +87,16 @@ export default function Profile() {
     navigate(route);
   };
 
-  
+  const handleLogout = async () => {
+    if (window.confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+      await logout();
+      navigate("/login");
+    }
+  };
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4, textAlign: "center" }}>
+      <Container maxWidth="lg" sx={{ py: 8, textAlign: "center" }}>
         <Typography variant="h6" color="text.secondary">
           Cargando perfil...
         </Typography>
@@ -71,178 +106,181 @@ export default function Profile() {
 
   if (!user) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4, textAlign: "center" }}>
-        <Typography variant="h6" color="error">
+      <Container maxWidth="lg" sx={{ py: 8, textAlign: "center" }}>
+        <Typography variant="h6" color="error" gutterBottom>
           Usuario no encontrado
         </Typography>
         <Button
           variant="contained"
-          sx={{ mt: 2 }}
           onClick={() => navigate("/login")}
+          sx={{ mt: 2 }}
         >
           Iniciar Sesión
         </Button>
       </Container>
     );
   }
-if (isAnalisis) {
+
+  if (isAnalisis) {
     return <Outlet />;
   }
+
   return (
-    <Box sx={{ my: 2, mx: { xs: 1, md: 3 } }}>
-      {/* Header del Perfil */}
-      <Paper
+    <Container maxWidth="xl" sx={{ py: { xs: 2, md: 4 } }}>
+      {/* Header simplificado */}
+      <Card
         elevation={0}
         sx={{
-          p: { xs: 2, md: 4 },
-          mb: 3,
-          background:
-            "linear-gradient(135deg, #FF5733 0%, #FF8C00 50%, #FFD700 100%)",
-          color: "white",
-          position: "relative",
-          overflow: "hidden",
+          mb: 4,
           borderRadius: 3,
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background:
-              "linear-gradient(45deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.05) 100%)",
-          },
+          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          background: theme.palette.background.paper,
+          overflow: "hidden",
         }}
       >
-        <Box position="relative" zIndex={1}>
-          <Grid container spacing={3} alignItems="center">
+        <Box sx={{ p: { xs: 2, md: 4 } }}>
+          <Grid container spacing={3} alignItems="flex-start">
             {/* Avatar Section */}
-            <Grid item xs={12} md={3} sx={{ textAlign: "center" }}>
+            <Grid item size={{xs:12, md:3}} sx={{ textAlign: "center" }}>
               <Avatar
                 src={userData?.image}
                 sx={{
-                  width: { xs: 100, md: 120 },
-                  height: { xs: 100, md: 120 },
+                  width: { xs: 100, md: 130 },
+                  height: { xs: 100, md: 130 },
                   mx: "auto",
                   mb: 2,
-                  border: "4px solid",
-                  borderColor: "white",
-                  boxShadow: 3,
-                  bgcolor: alpha("#FFFFFF", 0.2),
+                  border: `3px solid ${theme.palette.primary.main}`,
+                  boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`,
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
                 }}
               >
-                <Person sx={{ fontSize: { xs: 50, md: 60 } }} />
+                <Person sx={{ fontSize: { xs: 50, md: 65 } }} />
               </Avatar>
-
-              {/* Stats rápidos */}
+              
+              {userData?.review && (
+                <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap">
+                  <RatingChip
+                    type="Excelente"
+                    count={userData.review.excellent || 0}
+                    color={theme.palette.success.main}
+                  />
+                  <RatingChip
+                    type="Bueno"
+                    count={userData.review.good || 0}
+                    color={theme.palette.warning.main}
+                  />
+                  <RatingChip
+                    type="Regular"
+                    count={userData.review.average || 0}
+                    color={theme.palette.error.main}
+                  />
+                </Stack>
+              )}
             </Grid>
 
             {/* Información del usuario */}
-            <Grid item xs={12} md={6}>
+            <Grid item size={{xs:12, md:6}}>
               <Typography
                 variant="h4"
                 gutterBottom
                 fontWeight="bold"
-                sx={{
-                  fontSize: { xs: "1.75rem", md: "2.125rem" },
-                  textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                sx={{ 
+                  fontSize: { xs: "1.75rem", md: "2rem" },
+                  color: theme.palette.text.primary,
                 }}
               >
                 {userData?.nombre || "Usuario"}
               </Typography>
 
               <Typography
-                variant="h6"
-                paragraph
-                sx={{
-                  opacity: 0.9,
-                  mb: 3,
-                  fontSize: { xs: "1rem", md: "1.25rem" },
+                variant="body1"
+                gutterBottom
+                sx={{ 
+                  color: theme.palette.text.secondary,
+                  mb: 2,
                 }}
               >
                 {userData?.email}
               </Typography>
 
-              {/* Ratings */}
-              {userData?.review && (
-                <Box
-                  sx={{
-                    background: alpha("#FFFFFF", 0.2),
-                    display: "flex",
-                    gap: 1,
-                    flexWrap: "wrap",
-                    mb: 2,
-                    border: "px solid rgba(255,255,255,0.3)",
-                  }}
-                >
-                  <RatingChip
-                    type="Excelente"
-                    count={userData.review.excellent || 0}
-                    color="#4CAF50"
-                  />
-                  <RatingChip
-                    type="Bueno"
-                    count={userData.review.good || 0}
-                    color="#FF9800"
-                  />
-                  <RatingChip
-                    type="Regular"
-                    count={userData.review.average || 0}
-                    color="#F44336"
-                  />
-                </Box>
-              )}
+              <Divider sx={{ my: 2 }} />
 
-              {/* Información adicional */}
-              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                
-                {userData?.location && (
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    📍 {userData.location}
-                  </Typography>
+              {/* Información detallada */}
+              <Stack spacing={1.5}>
+                {userData?.phone && (
+                  <InfoField 
+                    icon={<Phone fontSize="small" color="action" />}
+                    label="Teléfono"
+                    value={userData.phone}
+                  />
                 )}
-              </Box>
+                {userData?.location && (
+                  <InfoField 
+                    icon={<LocationOn fontSize="small" color="action" />}
+                    label="Ubicación"
+                    value={userData.location}
+                  />
+                )}
+                {userData?.memberSince && (
+                  <InfoField 
+                    icon={<CalendarToday fontSize="small" color="action" />}
+                    label="Miembro desde"
+                    value={userData.memberSince}
+                  />
+                )}
+              </Stack>
             </Grid>
 
             {/* Botones de acción */}
-            <Grid
-              item
-              xs={12}
-              md={3}
-              sx={{ textAlign: { xs: "center", md: "right" } }}
-            >
-              <Button
-                variant="contained"
-                startIcon={<Edit />}
-                sx={{
-                  background: "rgba(255,255,255,0.95)",
-                  color: "#FF5733",
-                  fontWeight: "bold",
-                  px: 3,
-                  py: 1,
-                  borderRadius: 2,
-                  "&:hover": {
-                    background: "white",
-                    transform: "translateY(-2px)",
-                    boxShadow: 4,
-                  },
-                  transition: "all 0.3s ease",
-                  mb: 1,
-                  width: { xs: "100%", md: "auto" },
-                }}
-                onClick={() => navigate("edit")}
-              >
-                Editar Perfil
-              </Button>
+            <Grid item size={{xs:12, md:3}}>
+              <Stack spacing={1.5} direction={{ xs: "row", md: "column" }}>
+                <Button
+                  variant="contained"
+                  startIcon={<Edit />}
+                  fullWidth
+                  sx={{
+                    py: 1,
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                  }}
+                  onClick={() => navigate("edit")}
+                >
+                  Editar Perfil
+                </Button>
+                
+                <Button
+                  variant="outlined"
+                  startIcon={<ExitToApp />}
+                  fullWidth
+                  sx={{
+                    py: 1,
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    color: theme.palette.error.main,
+                    borderColor: alpha(theme.palette.error.main, 0.5),
+                    "&:hover": {
+                      borderColor: theme.palette.error.main,
+                      backgroundColor: alpha(theme.palette.error.main, 0.04),
+                    },
+                  }}
+                  onClick={handleLogout}
+                >
+                  Cerrar Sesión
+                </Button>
+              </Stack>
             </Grid>
           </Grid>
         </Box>
-      </Paper>
+      </Card>
 
-      {/* Contenido principal */}
-      
-        <Opcion handleItemClick={handleItemClick}/>
-      
-    </Box>
+      {/* Contenido principal - Opciones */}
+      <Card elevation={0} sx={{ borderRadius: 3, border: `1px solid ${alpha(theme.palette.divider, 0.1)}` }}>
+        <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+          <Opcion handleItemClick={handleItemClick} />
+        </CardContent>
+      </Card>
+    </Container>
   );
 }

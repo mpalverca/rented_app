@@ -25,6 +25,7 @@ const PRODUCT_STATUS = {
 
 export default function RentedTable({
   rentedItem,
+  days,
   total,
   AssignmentReturn,
   setReturnDialog,
@@ -42,7 +43,7 @@ export default function RentedTable({
       {/* Header con gradiente */}
       <Box
         sx={{
-          background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
+          //background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
           color: "white",
           px: 3,
           my: 2,
@@ -123,6 +124,11 @@ export default function RentedTable({
                     Precio
                   </Typography>
                 </TableCell>
+                 <TableCell align="center">
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    Tiempo
+                  </Typography>
+                </TableCell>
                 <TableCell align="center">
                   <Typography variant="subtitle1" fontWeight="bold">
                     Subtotal
@@ -181,9 +187,9 @@ export default function RentedTable({
                         >
                           {product.name}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        {/* <Typography variant="caption" color="text.secondary">
                           ID: {product.id.slice(-8).toUpperCase()}
-                        </Typography>
+                        </Typography> */}
                       </Box>
                     </Box>
                   </TableCell>
@@ -198,7 +204,16 @@ export default function RentedTable({
                       fontWeight="medium"
                       color="primary.main"
                     >
-                      ${product.price}
+                      ${product.subproducto.price}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Typography
+                      variant="body1"
+                      fontWeight="medium"
+                      color="primary.main"
+                    >
+                      {days} días
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
@@ -207,7 +222,7 @@ export default function RentedTable({
                       fontWeight="bold"
                       color="success.main"
                     >
-                      ${(product.price * product.quantity).toFixed(2)}
+                      ${(product.subproducto.price * product.quantity * days).toFixed(2)}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
@@ -268,16 +283,16 @@ export default function RentedTable({
                   },
                 }}
               >
-                <TableCell colSpan={3} />
+                <TableCell colSpan={4} />
                 <TableCell align="center">
                   <Typography
                     variant="h6"
                     sx={{
-                      background:
-                        "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
+                      /* background:
+                        "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)", */
                       backgroundClip: "text",
                       WebkitBackgroundClip: "text",
-                      color: "transparent",
+                      //color: "transparent",
                       fontWeight: "bold",
                     }}
                   >

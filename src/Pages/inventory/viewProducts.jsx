@@ -18,10 +18,21 @@ import {
   Add as AddIcon,
   Inventory as InventoryIcon,
   Person as PersonIcon,
+  Preview,
 } from "@mui/icons-material";
+import { useNavigate, useParams } from "react-router-dom";
 
+export default function ViewProducts({
+  products,
+  handleOpenDialog,
+  handleOpenDeleteDialog,
+}) {
+ const navigate = useNavigate();
+  const { storeId } = useParams();
+    const handleViewDetails = (rentedId) => {
+    navigate(`/my_store/${storeId}/inventary/edit_product/${rentedId}`);
+  };
 
-export default function ViewProducts({products,getAvailableStock,getStockColor,getConditionColor,handleOpenDialog,handleOpenDeleteDialog}) {
   return (
     <TableContainer component={Paper}>
       <Table>
@@ -31,33 +42,19 @@ export default function ViewProducts({products,getAvailableStock,getStockColor,g
               <strong>Producto</strong>
             </TableCell>
             <TableCell>
-              <strong>Etiquetas</strong>
+              <strong>Imagen</strong>
             </TableCell>
             <TableCell>
               <strong>Agregado Por</strong>
             </TableCell>
+            
             <TableCell>
-              <strong>Stock Total</strong>
-            </TableCell>
-            <TableCell>
-              <strong>Alquilados</strong>
-            </TableCell>
-            <TableCell>
-              <strong>Disponibles</strong>
-            </TableCell>
-            <TableCell>
-              <strong>Condición</strong>
-            </TableCell>
-            <TableCell>
-              <strong>Precio/Día</strong>
-            </TableCell>
-             <TableCell>
-              <strong>Precio/Perdida</strong>
+              <strong>Subproductos</strong>
             </TableCell>
             <TableCell>
               <strong>Extra</strong>
             </TableCell>
-            <TableCell>
+                <TableCell>
               <strong>Estado</strong>
             </TableCell>
             <TableCell>
@@ -74,7 +71,7 @@ export default function ViewProducts({products,getAvailableStock,getStockColor,g
                   {product.category}
                 </Typography>
               </TableCell>
-              <TableCell>
+              {/* <TableCell>
                 <Box
                   sx={{
                     display: "flex",
@@ -92,6 +89,15 @@ export default function ViewProducts({products,getAvailableStock,getStockColor,g
                     />
                   ))}
                 </Box>
+              </TableCell> */}
+              <TableCell>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                 <img
+  src={product?.image?.[0] || "/images/default-product.png"}
+  alt={product?.name || "Producto"}
+  style={{ width: "100px", height: "auto", objectFit: "cover" }}
+/>
+                </Box>
               </TableCell>
               <TableCell>
                 <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -99,39 +105,21 @@ export default function ViewProducts({products,getAvailableStock,getStockColor,g
                   {product.addedBy}
                 </Box>
               </TableCell>
-              <TableCell>
+              <TableCell align="center">
                 <Chip
-                  label={product.stock}
+                  label={product.suproducts?.length || 0}
                   color="primary"
                   variant="outlined"
                   size="small"
                 />
               </TableCell>
               <TableCell>
-                <Chip label={product.rented} color="secondary" size="small" />
-              </TableCell>
-              <TableCell>
                 <Chip
-                  label={getAvailableStock(product)}
-                  color={getStockColor(product)}
+                  label={product.extra === true ? "Sí" : "No"}
+                  //  color={product.extra===true ? "blue" : "red"}
+                  //variant="outlined"
                   size="small"
                 />
-              </TableCell>
-              <TableCell>
-                <Chip
-                  label={product.condition}
-                  color={getConditionColor(product.condition)}
-                  size="small"
-                />
-              </TableCell>
-              <TableCell>
-                <Typography variant="body2">${product.price}</Typography>
-              </TableCell>
-               <TableCell>
-                <Typography variant="body2">{product.priceLost}</Typography>
-              </TableCell>
-              <TableCell>
-                <Typography variant="body2">{product.extra===true?"SI":"NO"}</Typography>
               </TableCell>
               <TableCell>
                 <Chip
@@ -146,6 +134,13 @@ export default function ViewProducts({products,getAvailableStock,getStockColor,g
                     size="small"
                     color="primary"
                     onClick={() => handleOpenDialog(product)}
+                  >
+                    <Preview />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    color="success"
+                    onClick={() =>   handleViewDetails(product.id)}
                   >
                     <EditIcon />
                   </IconButton>

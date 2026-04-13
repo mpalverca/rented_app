@@ -2,24 +2,20 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  Stepper,
-  Step,
-  StepLabel,
   Card,
   CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
   Button,
   Grid,
   Alert,
   CircularProgress,
-  Badge,
+  Chip,
+  Fade,
+  Grow,
+  Skeleton,
+  useMediaQuery,
+  useTheme,
+  Tooltip,
+  Divider,
 } from "@mui/material";
 import {
   CalendarToday,
@@ -27,26 +23,66 @@ import {
   LocationOn,
   Store,
   AssignmentReturn,
-  LocationCity,
-  CarRental,
-  CarRentalOutlined,
   Payment,
+  Receipt,
+  CheckCircle,
+  Pending,
+  LocalActivity,
+  DirectionsCar,
+  MapOutlined,
+  Phone,
+  Email,
+  Print,
+  Share,
+  ArrowBack,
+  VerifiedUser,
+  Schedule,
 } from "@mui/icons-material";
 import rentedServices from "../../../services/rentedServices";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { storeService } from "../../../services/storeServices";
 import { DialogCar, ReturnProduct, ViewLocation } from "./dialogRented";
 import RentedTable from "./rentedTable";
 import Notes from "./Notes";
+import Head from "./head";
 
-// Estados del pedido
+// Configuración de estados del pedido
 const ORDER_STEPS = [
-  { label: "Iniciado", key: "iniciado" },
-  { label: "Aceptado", key: "aceptado" },
-  { label: "Enviado", key: "enviado" },
-  { label: "Retorno", key: "retorno" },
-  { label: "Cerrado", key: "cerrado" },
+  { label: "Iniciado", key: "iniciado", icon: <Pending />, color: "#ff9800" },
+  {
+    label: "Confirmado",
+    key: "confirmado",
+    icon: <CheckCircle />,
+    color: "#2196f3",
+  },
+  {
+    label: "En Camino",
+    key: "en_camino",
+    icon: <LocalShipping />,
+    color: "#1976d2",
+  },
+  {
+    label: "Entregado",
+    key: "entregado",
+    icon: <LocalActivity />,
+    color: "#4caf50",
+  },
+  {
+    label: "Completado",
+    key: "completado",
+    icon: <CheckCircle />,
+    color: "#4caf50",
+  },
 ];
+
+const STATE_COLORS = {
+  iniciado: { bg: "#fff3e0", color: "#ff9800", label: "Iniciado" },
+  confirmado: { bg: "#e3f2fd", color: "#2196f3", label: "Confirmado" },
+  en_camino: { bg: "#e8eaf6", color: "#1976d2", label: "En Camino" },
+  entregado: { bg: "#e8f5e9", color: "#4caf50", label: "Entregado" },
+  completado: { bg: "#e8f5e9", color: "#4caf50", label: "Completado" },
+  cancelado: { bg: "#ffebee", color: "#f44336", label: "Cancelado" },
+};
 
 export default function RentedDetail() {
   const [rentedItem, setRentedItem] = useState(null);
@@ -59,6 +95,9 @@ export default function RentedDetail() {
   const [returnQuantities, setReturnQuantities] = useState({});
 
   const { userId, rentedId } = useParams();
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     loadRentedData();
@@ -106,7 +145,7 @@ export default function RentedDetail() {
       newQuantities[product.id] = event.target.checked
         ? Math.min(
             product.quantity - product.returnedQuantity,
-            product.quantity
+            product.quantity,
           )
         : 0;
     });
@@ -132,7 +171,7 @@ export default function RentedDetail() {
         ...prev,
         [productId]: Math.min(
           product.quantity - product.returnedQuantity,
-          product.quantity
+          product.quantity,
         ),
       }));
     }
@@ -158,8 +197,6 @@ export default function RentedDetail() {
 
   const handleReturnProducts = async () => {
     try {
-      console.log("Productos a devolver:", selectedProducts);
-      console.log("Cantidades:", returnQuantities);
       setReturnDialog(false);
       setSelectedProducts({});
       setReturnQuantities({});
@@ -171,394 +208,410 @@ export default function RentedDetail() {
 
   const getActiveStep = () => {
     const stepIndex = ORDER_STEPS.findIndex(
-      (step) => step.key === rentedItem?.state
+      (step) => step.key === rentedItem?.state,
     );
     return stepIndex >= 0 ? stepIndex : 0;
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
+    if (!dateString) return "No definida";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
       day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat("es-EC", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+    }).format(price);
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: `Alquiler #${String(rentedItem.id).slice(-8)}`,
+      text: `Mi alquiler por ${rentedItem.days} días`,
+      url: window.location.href,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Error sharing:", err);
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   if (loading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="400px"
-      >
-        <CircularProgress />
+      <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Skeleton variant="text" width={300} height={60} sx={{ mb: 3 }} />
+        <Skeleton
+          variant="rectangular"
+          height={100}
+          sx={{ mb: 3, borderRadius: 2 }}
+        />
+        <Grid container spacing={2}>
+          {[1, 2, 3, 4].map((i) => (
+            <Grid item xs={12} sm={6} md={3} key={i}>
+              <Skeleton
+                variant="rectangular"
+                height={150}
+                sx={{ borderRadius: 2 }}
+              />
+            </Grid>
+          ))}
+        </Grid>
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Box p={3}>
-        <Alert severity="error">{error}</Alert>
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error" onClose={() => setError("")}>
+          {error}
+        </Alert>
       </Box>
     );
   }
 
   if (!rentedItem) {
     return (
-      <Box p={3}>
+      <Box sx={{ p: 3 }}>
         <Alert severity="warning">No se encontró el alquiler solicitado</Alert>
       </Box>
     );
   }
 
+  const stateConfig = STATE_COLORS[rentedItem.state] || STATE_COLORS.iniciado;
   const allSelected = rentedItem.product.every(
-    (product) => selectedProducts[product.id]
+    (product) => selectedProducts[product.id],
   );
   const someSelected =
     rentedItem.product.some((product) => selectedProducts[product.id]) &&
     !allSelected;
 
   return (
-    <Box sx={{ p: 1, margin: "0 auto" }}>
-      {/* Header con gradiente */}
-      <Box 
-        sx={{ 
-          mb: 3, 
-          //p: 3, 
-          background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-          borderRadius: 3,
-          color: "white",
-          textAlign: "center"
+    <Fade in timeout={500}>
+      <Box
+        sx={{
+          p: { xs: 2, md: 3 },
+          bgcolor: "#f5f5f5",
+          minHeight: "100vh",
+          borderRadius: 2,
         }}
       >
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold" }}>
-          Detalle del Alquiler #{rentedItem.id.slice(-8).toUpperCase()}
-        </Typography>
-      </Box>
+        {/* Header con gradiente */}
+        <Head
+          rentedItem={rentedItem}
+          getActiveStep={getActiveStep}
+          isMobile={isMobile}
+          ORDER_STEPS={ORDER_STEPS}
+          handleShare={handleShare}
+          handlePrint={handlePrint}
+        />
 
-      {/* Stepper del estado del pedido */}
-      <Card 
-        sx={{ 
-          mb: 3, 
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 3,
-          overflow: 'hidden'
-        }}
-      >
-        <CardContent sx={{ py: 2 }}>
-          <Stepper activeStep={getActiveStep()} alternativeLabel>
-            {ORDER_STEPS.map((step) => (
-              <Step key={step.key}>
-                <StepLabel 
-                  sx={{
-                    '& .MuiStepLabel-label': {
-                      fontWeight: 'bold',
-                      fontSize: '0.9rem'
+        {/* Stepper del estado del pedido */}
+
+        {/* Tarjetas de información */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {/* Fechas */}
+          <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grow in timeout={300}>
+              <Card
+                sx={{
+                  borderRadius: 3,
+                  height: "100%",
+                  transition: "all 0.3s ease",
+                  "&:hover": { transform: "translateY(-4px)", boxShadow: 3 },
+                }}
+              >
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <CalendarToday sx={{ color: "#667eea" }} />
+                    <Typography variant="h6" fontWeight="bold">
+                      Fechas
+                    </Typography>
+                  </Box>
+                  <Chip
+                    icon={<Schedule />}
+                    label={`${rentedItem.days} días`}
+                    size="small"
+                    sx={{ mb: 2, bgcolor: "#667eea", color: "white" }}
+                  />
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    📅 Inicio: {formatDate(rentedItem.dates?.dateInit)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    📅 Fin: {formatDate(rentedItem.dates?.dateEnd)}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
+
+          {/* Tienda */}
+          <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grow in timeout={400}>
+              <Card
+                sx={{
+                  borderRadius: 3,
+                  height: "100%",
+                  transition: "all 0.3s ease",
+                  "&:hover": { transform: "translateY(-4px)", boxShadow: 3 },
+                }}
+              >
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <Store sx={{ color: "#667eea" }} />
+                    <Typography variant="h6" fontWeight="bold">
+                      Tienda
+                    </Typography>
+                  </Box>
+                  <Typography variant="body1" fontWeight="medium" gutterBottom>
+                    {rentedItem.store?.nombre || "Tienda no especificada"}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    📍{" "}
+                    {rentedItem.store?.direccion || "Dirección no disponible"}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    📞 {rentedItem.store?.telefono || "Teléfono no disponible"}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
+
+          {/* Ubicación */}
+          {rentedItem.location && (
+            <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grow in timeout={500}>
+                <Card
+                  onClick={() => {
+                    if (rentedItem.location) {
+                      // Extraer coordenadas (soporta array [lat, lng] o objeto {lat, lng})
+                      let lat, lng;
+                      if (Array.isArray(rentedItem.location)) {
+                        lat = rentedItem.location[0];
+                        lng = rentedItem.location[1];
+                      } else {
+                        lat = rentedItem.location.lat;
+                        lng = rentedItem.location.lng;
+                      }
+
+                      // Abrir Google Maps
+                      const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+                      window.open(googleMapsUrl, "_blank");
                     }
                   }}
-                >
-                  {step.label}
-                </StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        </CardContent>
-      </Card>
-
-      <Grid container spacing={2}>
-        {/* Información del alquiler */}
-        <Grid item size={{sx:12, sm:6, md:3}}>
-          <Card 
-            sx={{ 
-              height: '100%',
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 2,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: 3
-              }
-            }}
-          >
-            <CardContent>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  fontWeight: "bold",
-                  background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-                  backgroundClip: "text",
-                  WebkitBackgroundClip: "text",
-                  color: "transparent"
-                }}
-              >
-                <CalendarToday sx={{ mr: 1 }} />
-                Fechas del Alquiler
-              </Typography>
-              <Badge sx={{ width: '100%', mb: 1 }}>
-                <Chip
-                  icon={<LocalShipping />}
-                  label={`${rentedItem.days} días`}
-                  variant="outlined"
-                  size="small"
                   sx={{
-                    borderColor: "#FF5733",
-                    color: "#FF5733",
-                    fontWeight: 'bold'
-                  }}
-                />
-              </Badge>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                  📅 Inicio: {formatDate(rentedItem.dates.dateInit)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  📅 Fin: {formatDate(rentedItem.dates.dateEnd)}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Información de la Tienda */}
-        <Grid item size={{sx:12, sm:6, md:3}}>
-          <Card 
-            sx={{ 
-              height: '100%',
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 2,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: 3
-              }
-            }}
-          >
-            <CardContent>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  fontWeight: "bold",
-                  background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-                  backgroundClip: "text",
-                  WebkitBackgroundClip: "text",
-                  color: "transparent"
-                }}
-              >
-                <Store sx={{ mr: 1 }} />
-                Información de la Tienda
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'medium', mb: 0.5 }}>
-                {rentedItem.store?.nombre || "Tienda"}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                📍 {rentedItem.store.direccion}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                📞 {rentedItem.store.telefono}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Ubicación de Entrega */}
-        <Grid item size={{sx:12, sm:6, md:2}}>
-          {rentedItem.location && (
-            <Card 
-              onClick={() => setMapDialog(true)}
-              sx={{ 
-                height: '100%',
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 2,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: 3,
-                  borderColor: "#FF5733"
-                }
-              }}
-            >
-              <CardContent>
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    fontWeight: "bold",
-                    background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-                    backgroundClip: "text",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent"
+                    borderRadius: 3,
+                    height: "100%",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: 3,
+                      borderColor: "#667eea",
+                    },
                   }}
                 >
-                  <LocationOn sx={{ mr: 1 }} />
-                  Ubicación
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  {rentedItem.reference}
-                </Typography>
-                <Chip 
-                  icon={<LocationOn />} 
-                  label="Ver Mapa" 
-                  size="small" 
-                  variant="outlined"
-                  sx={{
-                    borderColor: "#FF5733",
-                    color: "#FF5733"
-                  }}
-                />
-              </CardContent>
-            </Card>
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 2,
+                      }}
+                    >
+                      <LocationOn sx={{ color: "#667eea" }} />
+                      <Typography variant="h6" fontWeight="bold">
+                        Ubicación
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      {rentedItem.reference || "Referencia no especificada"}
+                    </Typography>
+                    <Chip
+                      icon={<MapOutlined />}
+                      label="Ver en mapa"
+                      size="small"
+                      variant="outlined"
+                      sx={{ borderColor: "#667eea", color: "#667eea" }}
+                    />
+                  </CardContent>
+                </Card>
+              </Grow>
+            </Grid>
           )}
-        </Grid>
 
-        {/* Transporte */}
-        <Grid item size={{sx:12, sm:6, md:2}}>
+          {/* Transporte */}
           {rentedItem.carInit && (
-            <Card 
-              onClick={() => setCarView(true)}
-              sx={{ 
-                height: '100%',
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 2,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: 3,
-                  borderColor: "#FF5733"
-                }
-              }}
-            >
-              <CardContent>
-                <Typography
-                  variant="h6"
-                  gutterBottom
+            <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grow in timeout={600}>
+                <Card
+                  onClick={() => setCarView(true)}
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    fontWeight: "bold",
-                    background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-                    backgroundClip: "text",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent"
+                    borderRadius: 3,
+                    height: "100%",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    "&:hover": { transform: "translateY(-4px)", boxShadow: 3 },
                   }}
                 >
-                  <CarRentalOutlined sx={{ mr: 1 }} />
-                  Transporte
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                  🚚 Envío: {rentedItem.carInit.requiere ? "Requerido" : "No requerido"}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  🔄 Retorno: {rentedItem.carEnd?.requiere ? "Requerido" : "No requerido"}
-                </Typography>
-              </CardContent>
-            </Card>
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 2,
+                      }}
+                    >
+                      <DirectionsCar sx={{ color: "#667eea" }} />
+                      <Typography variant="h6" fontWeight="bold">
+                        Transporte
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label={
+                        rentedItem.carInit.requiere
+                          ? "Requerido"
+                          : "No requerido"
+                      }
+                      size="small"
+                      color={
+                        rentedItem.carInit.requiere ? "warning" : "success"
+                      }
+                      sx={{ mb: 1 }}
+                    />
+                    <Typography variant="body2" color="text.secondary">
+                      Retorno:{" "}
+                      {rentedItem.carReturn?.requiere
+                        ? "Requerido"
+                        : "No requerido"}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grow>
+            </Grid>
           )}
         </Grid>
 
-        {/* Pagos */}
-        <Grid item size={{sx:12, sm:6, md:2}}>
-          <Card 
-            sx={{ 
-              height: '100%',
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 2,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: 3
-              }
-            }}
-          >
-            <CardContent>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  fontWeight: "bold",
-                  background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-                  backgroundClip: "text",
-                  WebkitBackgroundClip: "text",
-                  color: "transparent"
-                }}
-              >
-                <Payment sx={{ mr: 1 }} />
-                Pagos
+        {/* Tabla de productos */}
+        <Card sx={{ borderRadius: 3, mb: 4, overflow: "hidden" }}>
+          <CardContent>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+                flexWrap: "wrap",
+                gap: 2,
+              }}
+            >
+              <Typography variant="h6" fontWeight="bold">
+                Productos Alquilados
               </Typography>
-              <Chip 
-                label={rentedItem.statepay ? "Pagado" : "Sin pagar"} 
-                color={rentedItem.statepay ? "success" : "warning"}
-                variant="outlined"
-                sx={{ mb: 1, fontWeight: 'bold' }}
+              <Chip
+                icon={<Receipt />}
+                label={`Total: ${formatPrice(rentedItem.total)}`}
+                sx={{ bgcolor: "#667eea", color: "white", fontWeight: "bold" }}
               />
-              <Typography variant="body2" color="text.secondary">
-                Método: {rentedItem.typePay}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+            </Box>
+            <RentedTable
+              rentedItem={rentedItem.product}
+              days={rentedItem.days}
+              total={rentedItem.total}
+              AssignmentReturn={AssignmentReturn}
+              setReturnDialog={setReturnDialog}
+              state={rentedItem?.state}
+            />
+          </CardContent>
+        </Card>
 
-      {/* Tabla de productos */}
-      <RentedTable 
-        rentedItem={rentedItem.product}
-        total={rentedItem.total}
-        AssignmentReturn={AssignmentReturn}
-        setReturnDialog={setReturnDialog}
-        state={rentedItem?.state}
-      />
-         {/* Sección de Notas/Chat */}
-         <Notes rentedItem={rentedItem}
-         setRentedItem={setRentedItem}
-         setError={setCarView}
-         />
-      {/* Diálogos */}
-      <ReturnProduct
-        returnDialog={returnDialog}
-        allSelected={allSelected}
-        someSelected={someSelected}
-        handleSelectAll={handleSelectAll}
-        setReturnDialog={setReturnDialog}
-        rentedItem={rentedItem}
-        selectedProducts={selectedProducts}
-        returnQuantities={returnQuantities}
-        handleProductSelect={handleProductSelect}
-        handleQuantityChange={handleQuantityChange}
-        handleReturnProducts={handleReturnProducts}
-      />
-      
-      <DialogCar
-        open={carview}
-        setReturnDialog={setCarView}
-        title="Vehículos de Transporte"
-        carI={rentedItem.carInit}
-        carR={rentedItem.carReturn}
-      />
-      
-      <ViewLocation
-        open={mapDialog}
-        closeDialog={setMapDialog}
-        location={rentedItem.location}
-      />
-    </Box>
+        {/* Sección de Notas/Chat */}
+        <Card sx={{ borderRadius: 3, mb: 4 }}>
+          <CardContent>
+            <Notes
+              rentedItem={rentedItem}
+              setRentedItem={setRentedItem}
+              setError={setCarView}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Diálogos */}
+        <ReturnProduct
+          returnDialog={returnDialog}
+          allSelected={allSelected}
+          someSelected={someSelected}
+          handleSelectAll={handleSelectAll}
+          setReturnDialog={setReturnDialog}
+          rentedItem={rentedItem}
+          selectedProducts={selectedProducts}
+          returnQuantities={returnQuantities}
+          handleProductSelect={handleProductSelect}
+          handleQuantityChange={handleQuantityChange}
+          handleReturnProducts={handleReturnProducts}
+        />
+
+        <DialogCar
+          open={carview}
+          setReturnDialog={setCarView}
+          title="Vehículos de Transporte"
+          carI={rentedItem.carInit}
+          carR={rentedItem.carReturn}
+        />
+
+        <ViewLocation
+          open={mapDialog}
+          closeDialog={setMapDialog}
+          location={rentedItem.location}
+        />
+      </Box>
+    </Fade>
   );
 }

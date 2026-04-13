@@ -25,10 +25,10 @@ import {
   ListItemAvatar,
   ListItemText,
   InputAdornment,
-
+  DialogContentText,
 } from "@mui/material";
 import MapView from "../../../components/maps/mapView";
-import { Search } from "@mui/icons-material";
+import { Add, Search } from "@mui/icons-material";
 import {
   useInfiniteProductsExtra,
   useInfiniteProductsStore,
@@ -379,7 +379,7 @@ export const ReturnProduct = ({
                     onChange={(e) =>
                       handleQuantityChange(
                         product.id,
-                        parseInt(e.target.value) || 0
+                        parseInt(e.target.value) || 0,
                       )
                     }
                     inputProps={{
@@ -461,7 +461,7 @@ export const DialogProducts = ({
         loadMore();
       }
     },
-    [loadMore, hasMore, loadingMore]
+    [loadMore, hasMore, loadingMore],
   );
 
   // Filtrar productos de forma segura
@@ -473,7 +473,7 @@ export const DialogProducts = ({
           .includes(searchTerm?.toLowerCase() || "") ||
         product?.category
           ?.toLowerCase()
-          .includes(searchTerm?.toLowerCase() || "")
+          .includes(searchTerm?.toLowerCase() || ""),
     ) || [];
 
   const handleAddProduct = () => {
@@ -670,7 +670,7 @@ export const DialogProducts = ({
                   <MenuItem key={i + 1} value={i + 1}>
                     {i + 1} {i + 1 === 1 ? "unidad" : "unidades"}
                   </MenuItem>
-                )
+                ),
               )}
             </Select>
             <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
@@ -719,304 +719,7 @@ export const DialogProducts = ({
     </Dialog>
   );
 };
-export const DialogProductsExtra = ({
-  setProduct,
-  addProductDialog,
-  quantity,
-  setQuantity,
-  handleProductSelect,
-  handleCloseDialog,
-  Inventory,
-  searchTerm,
-  setSearchTerm,
-  selectedProduct,
-}) => {
-  // Manejar el caso donde useInfiniteProducts pueda devolver undefined
-  const infiniteProductsResult = useInfiniteProductsExtra();
 
-  // Verificar que infiniteProductsResult existe antes de desestructurar
-  const {
-    products = [],
-    loading = false,
-    loadingMore = false,
-    hasMore = false,
-    error = null,
-    loadMore = () => {},
-    refresh = () => {},
-  } = infiniteProductsResult || {};
-
-  //scroll
-  const handleScroll = useCallback(
-    (e) => {
-      const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
-
-      // Cargar más cuando esté cerca del final
-      if (
-        scrollHeight - scrollTop <= clientHeight + 100 &&
-        hasMore &&
-        !loadingMore
-      ) {
-        loadMore();
-      }
-    },
-    [loadMore, hasMore, loadingMore]
-  );
-
-  // Filtrar productos de forma segura
-  const filteredProducts =
-    products?.filter(
-      (product) =>
-        product?.name
-          ?.toLowerCase()
-          .includes(searchTerm?.toLowerCase() || "") ||
-        product?.category
-          ?.toLowerCase()
-          .includes(searchTerm?.toLowerCase() || "")
-    ) || [];
-
-  const handleAddProduct = () => {
-    if (selectedProduct && quantity > 0) {
-      console.log("Agregar producto:", selectedProduct, "Cantidad:", quantity);
-
-      const newProduct = {
-        id: selectedProduct.id,
-        name: selectedProduct.name,
-        price: selectedProduct.price,
-        state: "pendiente",
-        store: selectedProduct.store,
-        image: selectedProduct.image,
-        quantity: quantity,
-      };
-
-      // Agregar nuevo producto al final del array
-      setProduct((prev) => [...prev, newProduct]);
-
-      handleCloseDialog();
-    }
-  };
-
-  return (
-    <Dialog
-      open={addProductDialog}
-      onClose={handleCloseDialog}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          overflow: "hidden",
-        },
-      }}
-    >
-      <DialogTitle
-        sx={{
-          background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-          color: "white",
-          textAlign: "center",
-          fontWeight: "bold",
-        }}
-      >
-        <Inventory sx={{ mr: 1, verticalAlign: "middle" }} />
-        Agregar Producto al Alquiler
-      </DialogTitle>
-
-      <DialogContent sx={{ py: 3 }}>
-        {/* Barra de búsqueda */}
-        <TextField
-          fullWidth
-          placeholder="Buscar productos por nombre o categoría..."
-          value={searchTerm || ""}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 3 }}
-        />
-
-        {/* Lista de productos */}
-        <Box
-          sx={{ maxHeight: 300, overflow: "auto", mb: 3 }}
-          onScroll={handleScroll}
-        >
-          {loading && !loadingMore ? (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <List>
-              {filteredProducts.map((product) => (
-                <ListItem
-                  key={product?.id || Math.random()}
-                  component="div"
-                  selected={selectedProduct?.id === product?.id}
-                  onClick={() => handleProductSelect(product)}
-                  sx={{
-                    borderRadius: 1,
-                    mb: 1,
-                    cursor: "pointer",
-                    "&.Mui-selected": {
-                      backgroundColor: "primary.light",
-                      "&:hover": {
-                        backgroundColor: "primary.light",
-                      },
-                    },
-                  }}
-                >
-                  <ListItemAvatar>
-                    <Avatar
-                      src={
-                        Array.isArray(product?.image)
-                          ? product?.image[0]
-                          : product?.image
-                      }
-                      alt={product?.name}
-                      sx={{ width: 50, height: 50 }}
-                      onError={(e) => {
-                        e.target.style.display = "none";
-                      }}
-                    >
-                      <Inventory />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={
-                      <Typography
-                        component="span"
-                        variant="body1"
-                        fontWeight="bold"
-                      >
-                        {product?.name || "Producto sin nombre"}
-                      </Typography>
-                    }
-                    secondary={
-                      <Box component="span">
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          color="text.secondary"
-                          display="block"
-                        >
-                          {product?.category || "Sin categoría"}
-                        </Typography>
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          color="primary.main"
-                          fontWeight="bold"
-                          display="block"
-                        >
-                          ${product?.price || 0} - Stock: {product?.stock || 0}
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                </ListItem>
-              ))}
-            </List>
-          )}
-
-          {/* Indicadores de carga para infinite scroll */}
-          {loadingMore && (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-              <CircularProgress size={24} />
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                Cargando más productos...
-              </Typography>
-            </Box>
-          )}
-
-          {!hasMore && filteredProducts.length > 0 && (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                No hay más productos
-              </Typography>
-            </Box>
-          )}
-
-          {error && (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-              <Typography variant="body2" color="error">
-                Error: {error}
-              </Typography>
-            </Box>
-          )}
-
-          {filteredProducts.length === 0 && !loading && (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-              <Typography variant="body2" color="text.secondary">
-                No se encontraron productos
-              </Typography>
-            </Box>
-          )}
-        </Box>
-
-        {/* Selección de cantidad */}
-        {selectedProduct && (
-          <FormControl fullWidth>
-            <InputLabel>Cantidad</InputLabel>
-            <Select
-              value={quantity}
-              label="Cantidad"
-              onChange={(e) => setQuantity(e.target.value)}
-            >
-              {[...Array(Math.min(selectedProduct?.stock || 1, 10))].map(
-                (_, i) => (
-                  <MenuItem key={i + 1} value={i + 1}>
-                    {i + 1} {i + 1 === 1 ? "unidad" : "unidades"}
-                  </MenuItem>
-                )
-              )}
-            </Select>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-              Stock disponible: {selectedProduct?.stock || 0} unidades
-            </Typography>
-          </FormControl>
-        )}
-      </DialogContent>
-
-      <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button
-          onClick={handleCloseDialog}
-          variant="outlined"
-          sx={{
-            borderColor: "#FF5733",
-            color: "#FF5733",
-            "&:hover": {
-              borderColor: "#E04E2E",
-              backgroundColor: "rgba(255, 87, 51, 0.04)",
-            },
-          }}
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleAddProduct}
-          variant="contained"
-          disabled={!selectedProduct}
-          sx={{
-            background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-            color: "white",
-            fontWeight: "bold",
-            px: 3,
-            "&:hover": {
-              background: "linear-gradient(45deg, #E04E2E 30%, #E6C200 90%)",
-              boxShadow: 3,
-            },
-            "&:disabled": {
-              background: "grey.300",
-            },
-          }}
-        >
-          Agregar Producto
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
 export const EditProductTable = ({
   open,
   handleCloseDialog,
@@ -1027,14 +730,16 @@ export const EditProductTable = ({
   const [editedProduct, setEditedProduct] = useState({
     price: 0,
     quantity: 1,
+    state: "pendiente",
   });
 
   // Actualizar estado local cuando cambia selectedProduct
   useEffect(() => {
     if (selectedProduct) {
       setEditedProduct({
-        price: selectedProduct.price || 0,
+        price: selectedProduct.subproducto?.price || selectedProduct.price || 0,
         quantity: selectedProduct.quantity || 1,
+        state: selectedProduct.state || selectedProduct.subproducto?.state || "pendiente",
       });
     }
   }, [selectedProduct]);
@@ -1047,45 +752,95 @@ export const EditProductTable = ({
   };
 
   const handleSave = () => {
-    if (selectedProduct) {
-      setProduct((prev) =>
-        prev.map((p) =>
-          p.id === selectedProduct.id
-            ? {
-                ...p,
-                price: parseFloat(editedProduct.price) || 0,
-                quantity: parseInt(editedProduct.quantity) || 1,
-              }
-            : p
-        )
-      );
-      handleCloseDialog();
+    if (!selectedProduct) return;
+
+    const parsedPrice = parseFloat(editedProduct.price);
+    const parsedQuantity = parseInt(editedProduct.quantity);
+
+    // Validaciones
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      console.error("Precio inválido");
+      return;
+    }
+
+    if (isNaN(parsedQuantity) || parsedQuantity < 1) {
+      console.error("Cantidad inválida");
+      return;
+    }
+
+    setProduct((prev) =>
+      prev.map((p) =>
+        p.id === selectedProduct.id
+          ? {
+              ...p,
+              subproducto: {
+                ...p.subproducto,
+                price: parsedPrice,
+                state: editedProduct.state,
+              },
+              price: parsedPrice,
+              quantity: parsedQuantity,
+              state: editedProduct.state,
+            }
+          : p,
+      ),
+    );
+    handleCloseDialog();
+  };
+
+  // Obtener color del chip según estado
+  const getStateColor = (state) => {
+    switch (state) {
+      case "alquilado":
+        return { bg: "#FFF3E0", color: "#E65100", label: "Alquilado" };
+      case "devuelto":
+        return { bg: "#E8F5E9", color: "#2E7D32", label: "Devuelto" };
+      default:
+        return { bg: "#F3E5F5", color: "#7B1FA2", label: "Pendiente" };
     }
   };
 
+  const currentState = getStateColor(editedProduct.state);
+
   return (
     <Dialog open={open} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-      <DialogTitle
-        sx={{
-          background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-          color: "white",
-          textAlign: "center",
-          fontWeight: "bold",
-        }}
-      >
-        Editar producto {selectedProduct?.name}
+      <DialogTitle sx={{ fontWeight: "bold", pb: 1 }}>
+        Editar Producto
       </DialogTitle>
 
-      <DialogContent sx={{ py: 3 }}>
+      <DialogContent sx={{ py: 2 }}>
+        {/* Estado actual */}
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+          <Chip
+            label={`Estado: ${currentState.label}`}
+            sx={{
+              bgcolor: currentState.bg,
+              color: currentState.color,
+              fontWeight: "medium",
+            }}
+            size="small"
+          />
+        </Box>
+
+        {/* Nombre del producto */}
+        <Typography
+          variant="h6"
+          align="center"
+          sx={{ mb: 1, fontWeight: "medium" }}
+        >
+          {selectedProduct?.name}
+        </Typography>
+        <Typography
+          variant="body2"
+          align="center"
+          sx={{ mb: 3, color: "text.secondary" }}
+        >
+          {selectedProduct?.subproducto?.name}
+        </Typography>
+
         {/* Mostrar imagen del producto */}
         {selectedProduct?.image && (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              mb: 3,
-            }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
             <Avatar
               src={
                 Array.isArray(selectedProduct.image)
@@ -1094,9 +849,9 @@ export const EditProductTable = ({
               }
               alt={selectedProduct.name}
               sx={{
-                width: 240,
-                height: 240,
-                border: "2px solid",
+                width: 100,
+                height: 100,
+                border: "1px solid",
                 borderColor: "divider",
               }}
               variant="rounded"
@@ -1104,73 +859,53 @@ export const EditProductTable = ({
           </Box>
         )}
 
-        {/* Información del producto */}
-
         <Divider sx={{ my: 2 }} />
 
         {/* Formulario de edición */}
-        <Typography
-          variant="h6"
-          gutterBottom
-          sx={{ fontWeight: "bold", mb: 2 }}
-        >
+        <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 2 }}>
           Editar Valores
         </Typography>
 
         <Grid container spacing={3}>
           {/* Campo Precio */}
           <Grid item size={{ xs: 12, sm: 4 }}>
-            <FormControl fullWidth>
-              <TextField
-                label="Precio"
-                type="number"
-                value={editedProduct.price}
-                onChange={(e) => handleFieldChange("price", e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">$</InputAdornment>
-                  ),
-                }}
-                inputProps={{
-                  min: 0,
-                  step: 0.01,
-                }}
-                helperText="Precio por unidad"
-              />
-            </FormControl>
+            <TextField
+              fullWidth
+              label="Precio por día"
+              type="number"
+              value={editedProduct.price}
+              onChange={(e) => handleFieldChange("price", e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              }}
+              inputProps={{ min: 0, step: 0.01 }}
+              size="small"
+            />
           </Grid>
+
           {/* Campo Cantidad */}
           <Grid item size={{ xs: 12, sm: 4 }}>
-            <FormControl fullWidth>
-              <TextField
-                label="Cantidad"
-                type="number"
-                value={editedProduct.quantity}
-                onChange={(e) => handleFieldChange("quantity", e.target.value)}
-                inputProps={{
-                  min: 1,
-                  max: 100,
-                }}
-                helperText="Cantidad a alquilar"
-              />
-            </FormControl>
+            <TextField
+              fullWidth
+              label="Cantidad"
+              type="number"
+              value={editedProduct.quantity}
+              onChange={(e) => handleFieldChange("quantity", e.target.value)}
+              inputProps={{ min: 1, max: 100 }}
+              size="small"
+            />
           </Grid>
-          {/* Campo Estado (opcional) */}
+
+          {/* Campo Estado */}
           <Grid item size={{ xs: 12, sm: 4 }}>
-            <FormControl fullWidth>
+            <FormControl fullWidth size="small">
               <InputLabel>Estado</InputLabel>
               <Select
-                value={selectedProduct?.state || "pendiente"}
+                value={editedProduct.state}
                 label="Estado"
-                onChange={(e) => {
-                  setProduct((prev) =>
-                    prev.map((p) =>
-                      p.id === selectedProduct.id
-                        ? { ...p, state: e.target.value }
-                        : p
-                    )
-                  );
-                }}
+                onChange={(e) => handleFieldChange("state", e.target.value)}
               >
                 <MenuItem value="pendiente">Pendiente</MenuItem>
                 <MenuItem value="alquilado">Alquilado</MenuItem>
@@ -1186,35 +921,32 @@ export const EditProductTable = ({
             sx={{
               mt: 3,
               p: 2,
-              backgroundColor: "grey.50",
-              borderRadius: 1,
+              bgcolor: "action.hover",
+              borderRadius: 2,
             }}
           >
-            <Typography
-              variant="subtitle2"
-              gutterBottom
-              sx={{ fontWeight: "bold" }}
-            >
-              Resumen de Cambios:
+            <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 1.5 }}>
+              Resumen de Cambios
             </Typography>
             <Grid container spacing={1}>
               <Grid item size={{ xs: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Precio anterior diario:
+                <Typography variant="caption" color="text.secondary">
+                  Precio anterior
                 </Typography>
-                <Typography variant="body2" fontWeight="medium">
-                  ${selectedProduct.price}
+                <Typography variant="body2">
+                  ${selectedProduct.subproducto?.price || selectedProduct.price}
                 </Typography>
               </Grid>
               <Grid item size={{ xs: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Nuevo precio diario:
+                <Typography variant="caption" color="text.secondary">
+                  Nuevo precio
                 </Typography>
                 <Typography
                   variant="body2"
                   fontWeight="bold"
                   color={
-                    editedProduct.price !== selectedProduct.price
+                    parseFloat(editedProduct.price) !==
+                    (selectedProduct.subproducto?.price || selectedProduct.price)
                       ? "primary.main"
                       : "text.primary"
                   }
@@ -1223,22 +955,20 @@ export const EditProductTable = ({
                 </Typography>
               </Grid>
               <Grid item size={{ xs: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Cantidad anterior:
+                <Typography variant="caption" color="text.secondary">
+                  Cantidad anterior
                 </Typography>
-                <Typography variant="body2" fontWeight="medium">
-                  {selectedProduct.quantity}
-                </Typography>
+                <Typography variant="body2">{selectedProduct.quantity}</Typography>
               </Grid>
               <Grid item size={{ xs: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Nueva cantidad:
+                <Typography variant="caption" color="text.secondary">
+                  Nueva cantidad
                 </Typography>
                 <Typography
                   variant="body2"
                   fontWeight="bold"
                   color={
-                    editedProduct.quantity !== selectedProduct.quantity
+                    parseInt(editedProduct.quantity) !== selectedProduct.quantity
                       ? "primary.main"
                       : "text.primary"
                   }
@@ -1247,25 +977,46 @@ export const EditProductTable = ({
                 </Typography>
               </Grid>
               <Grid item size={{ xs: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Subtotal anterior diario:
+                <Typography variant="caption" color="text.secondary">
+                  Estado anterior
                 </Typography>
-                <Typography variant="body2" fontWeight="medium">
-                  $
-                  {(selectedProduct.price * selectedProduct.quantity).toFixed(
-                    2
-                  )}
+                <Typography variant="body2">
+                  {selectedProduct.state || "pendiente"}
                 </Typography>
               </Grid>
               <Grid item size={{ xs: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Nuevo ubtotal diario:
+                <Typography variant="caption" color="text.secondary">
+                  Nuevo estado
                 </Typography>
                 <Typography
                   variant="body2"
                   fontWeight="bold"
-                  color="success.main"
+                  color={
+                    editedProduct.state !== (selectedProduct.state || "pendiente")
+                      ? "primary.main"
+                      : "text.primary"
+                  }
                 >
+                  {editedProduct.state}
+                </Typography>
+              </Grid>
+              <Grid item size={{ xs: 6 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Subtotal anterior
+                </Typography>
+                <Typography variant="body2">
+                  $
+                  {(
+                    (selectedProduct.subproducto?.price || selectedProduct.price) *
+                    selectedProduct.quantity
+                  ).toFixed(2)}
+                </Typography>
+              </Grid>
+              <Grid item size={{ xs: 6 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Nuevo subtotal
+                </Typography>
+                <Typography variant="body2" fontWeight="bold" color="success.main">
                   ${(editedProduct.price * editedProduct.quantity).toFixed(2)}
                 </Typography>
               </Grid>
@@ -1274,38 +1025,15 @@ export const EditProductTable = ({
         )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button
-          onClick={handleCloseDialog}
-          variant="outlined"
-          sx={{
-            borderColor: "#FF5733",
-            color: "#FF5733",
-            "&:hover": {
-              borderColor: "#E04E2E",
-              backgroundColor: "rgba(255, 87, 51, 0.04)",
-            },
-          }}
-        >
+      <DialogActions sx={{ px: 3, pb: 3, pt: 1 }}>
+        <Button onClick={handleCloseDialog} variant="outlined" color="inherit">
           Cancelar
         </Button>
         <Button
           onClick={handleSave}
           variant="contained"
           disabled={!selectedProduct}
-          sx={{
-            background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-            color: "white",
-            fontWeight: "bold",
-            px: 3,
-            "&:hover": {
-              background: "linear-gradient(45deg, #E04E2E 30%, #E6C200 90%)",
-              boxShadow: 3,
-            },
-            "&:disabled": {
-              background: "grey.300",
-            },
-          }}
+          sx={{ fontWeight: "medium", px: 3 }}
         >
           Guardar Cambios
         </Button>
@@ -1313,4 +1041,3 @@ export const EditProductTable = ({
     </Dialog>
   );
 };
-

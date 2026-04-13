@@ -19,9 +19,10 @@ import React, { useState, useEffect } from "react";
 import { Search, Add, Clear, Inventory, Edit } from "@mui/icons-material";
 import {
   DialogProducts,
-  DialogProductsExtra,
+  
   EditProductTable,
 } from "./dialogRented";
+import DialogProductsExtra from "./dialogs/productsExtras";
 
 const PRODUCT_STATUS = {
   alquilado: { label: "Alquilado", color: "primary" },
@@ -54,6 +55,7 @@ export default function RentedTable({
     setQuantity(1);
   };
 
+  console.log(rentedItem);
   const handleCloseExtra = () => {
     setopenExtra(false);
     // setSearchTerm("");
@@ -78,8 +80,8 @@ export default function RentedTable({
       {/* Header con gradiente */}
       <Box
         sx={{
-          background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-          color: "white",
+          //background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
+          // color: "white",
           px: 3,
           py: 2,
         }}
@@ -97,13 +99,13 @@ export default function RentedTable({
                 startIcon={<Add />}
                 onClick={() => setAddProductDialog(true)}
                 sx={{
-                  backgroundColor: "white",
-                  color: "#FF5733",
+                 // backgroundColor: "white",
+               //   color: "#FF5733",
                   fontWeight: "bold",
                   px: 2,
                   "&:hover": {
-                    backgroundColor: "rgba(255,255,255,0.9)",
-                    transform: "translateY(-1px)",
+                    backgroundColor: "#FF5733",
+                    transform: "translateY(-2px)",
                     boxShadow: 3,
                   },
                 }}
@@ -115,13 +117,13 @@ export default function RentedTable({
                 startIcon={<Add />}
                 onClick={() => setopenExtra(true)}
                 sx={{
-                  backgroundColor: "white",
-                  color: "#FF5733",
+                 // backgroundColor: "white",
+                 // color: "#FF5733",
                   fontWeight: "bold",
                   px: 2,
                   "&:hover": {
-                    backgroundColor: "rgba(255,255,255,0.9)",
-                    transform: "translateY(-1px)",
+                   backgroundColor: "#FF5733",
+                    transform: "translateY(-2px)",
                     boxShadow: 3,
                   },
                 }}
@@ -193,6 +195,11 @@ export default function RentedTable({
                 </TableCell>
                 <TableCell align="center">
                   <Typography variant="subtitle1" fontWeight="bold">
+                    Tiempo
+                  </Typography>
+                </TableCell>
+                <TableCell align="center">
+                  <Typography variant="subtitle1" fontWeight="bold">
                     Subtotal
                   </Typography>
                 </TableCell>
@@ -252,9 +259,9 @@ export default function RentedTable({
                         >
                           {product.name}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        {/* <Typography variant="caption" color="text.secondary">
                           ID: {product.id.slice(-8).toUpperCase()}
-                        </Typography>
+                        </Typography> */}
                       </Box>
                     </Box>
                   </TableCell>
@@ -269,7 +276,16 @@ export default function RentedTable({
                       fontWeight="medium"
                       color="primary.main"
                     >
-                      ${product.price}
+                      $ {product.subproducto.price}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Typography
+                      variant="body1"
+                      fontWeight="medium"
+                      color="primary.main"
+                    >
+                      {days} días
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
@@ -278,7 +294,10 @@ export default function RentedTable({
                       fontWeight="bold"
                       color="success.main"
                     >
-                      ${(product.price * product.quantity).toFixed(2)}
+                      $
+                      {(product.subproducto.price * product.quantity).toFixed(
+                        2,
+                      )}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
@@ -304,8 +323,8 @@ export default function RentedTable({
                             product.returnedQuantity === product.quantity
                               ? "success.main"
                               : product.returnedQuantity > 0
-                              ? "warning.main"
-                              : "text.secondary"
+                                ? "warning.main"
+                                : "text.secondary"
                           }
                         >
                           {product.returnedQuantity || 0}/{product.quantity}
@@ -314,7 +333,7 @@ export default function RentedTable({
                           <Typography variant="caption" color="text.secondary">
                             {Math.round(
                               (product.returnedQuantity / product.quantity) *
-                                100
+                                100,
                             )}
                             % devuelto
                           </Typography>
@@ -327,7 +346,7 @@ export default function RentedTable({
                       color="info"
                       size="small"
                       onClick={() => {
-                        console.log("Eliminar producto:", product.id);
+                        console.log("editar", product.id);
                         setopenEdit(true);
                         setSelectedProductTable(product);
                       }}
@@ -359,8 +378,8 @@ export default function RentedTable({
                   },
                 }}
               >
-                <TableCell colSpan={3} />
-                <TableCell align="center">
+                {/*  <TableCell colSpan={4} />
+                 <TableCell align="center">
                   <Typography
                     variant="h6"
                     sx={{
@@ -374,24 +393,23 @@ export default function RentedTable({
                   >
                     Subtotal: ${total}
                   </Typography>
-                </TableCell>
-                <TableCell colSpan={3} />
+                </TableCell> 
+                <TableCell colSpan={4} /> */}
               </TableRow>
               <TableRow>
-                <TableCell colSpan={3} />
+                <TableCell colSpan={4} />
                 <TableCell align="center">
                   <Typography
                     variant="h6"
                     sx={{
-                      background:
-                        "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
+                      // background:"linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
                       backgroundClip: "text",
                       WebkitBackgroundClip: "text",
-                      color: "transparent",
+                      //color: "transparent",
                       fontWeight: "bold",
                     }}
                   >
-                    Total: ${total * days}
+                    Total: ${(total * days).toFixed(2)}
                   </Typography>
                 </TableCell>
                 <TableCell align="center"></TableCell>
@@ -417,85 +435,77 @@ export default function RentedTable({
               </Typography>
             </Grid>
             <Grid item>
-           
-                <Button
-                  variant="contained"
-                
-                  onClick={() => accept()}
-                  disabled={state=="iniciado"?false:true}
-                  sx={{
-                   m:1,
-                   
-                    backgroundColor: "white",
-                    color: "#FF5733",
-                    fontWeight: "bold",
-                    "&:hover": {
-                      backgroundColor: "rgba(255,255,255,0.9)",
-                      // transform: "translateY(-1px)",
-                      boxShadow: 3,
-                    },
-                  }}
-                >
-                  Aceptar Pedido
-                </Button>
-    
-                <Button
-                 disabled={state=="aceptado"?false:true}
-                  variant="contained"
-                  
-                  onClick={() => accept()}
-                  sx={{
-                          m:1,
-                    backgroundColor: "white",
-                    color: "#FF5733",
-                    fontWeight: "bold",
-                    "&:hover": {
-                      backgroundColor: "rgba(255,255,255,0.9)",
-                      // transform: "translateY(-1px)",
-                      boxShadow: 3,
-                    },
-                  }}
-                >
+              <Button
+                variant="contained"
+                onClick={() => accept()}
+                disabled={state == "iniciado" ? false : true}
+                sx={{
+                  m: 1,
+
+                  //backgroundColor: "white",
+                  //color: "#FF5733",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: "rgba(255,255,255,0.9)",
+                    // transform: "translateY(-1px)",
+                    boxShadow: 3,
+                  },
+                }}
+              >
+                Aceptar Pedido
+              </Button>
+
+              <Button
+                disabled={state == "aceptado" ? false : true}
+                variant="contained"
+                onClick={() => accept()}
+                sx={{
+                  m: 1,
+                  backgroundColor: "white",
+                  color: "#FF5733",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: "rgba(255,255,255,0.9)",
+                    // transform: "translateY(-1px)",
+                    boxShadow: 3,
+                  },
+                }}
+              >
                 Enviar Pedido
-                </Button>
-            <Button
-                 disabled={state=="retorno"?false:true}
-                  variant="contained"
-             
-                  onClick={() => accept()}
-                  sx={{
-                          m:1,
-                    backgroundColor: "white",
-                    color: "#FF5733",
-                    fontWeight: "bold",
-                    "&:hover": {
-                      backgroundColor: "rgba(255,255,255,0.9)",
-                      // transform: "translateY(-1px)",
-                      boxShadow: 3,
-                    },
-                  }}
-                >
+              </Button>
+              <Button
+                disabled={state == "retorno" ? false : true}
+                variant="contained"
+                onClick={() => accept()}
+                sx={{
+                  m: 1,
+                  //color: "#FF5733",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: "rgba(255,255,255,0.9)",
+                    // transform: "translateY(-1px)",
+                    boxShadow: 3,
+                  },
+                }}
+              >
                 cerrar pedido
-                </Button>
-                <Button
-             
-                  variant="contained"
-                  
-                  onClick={() => accept()}
-                  sx={{
-                          m:1,
-                    backgroundColor: "white",
-                    color: "#FF5733",
-                    fontWeight: "bold",
-                    "&:hover": {
-                      backgroundColor: "rgba(255,255,255,0.9)",
-                      // transform: "translateY(-1px)",
-                      boxShadow: 3,
-                    },
-                  }}
-                >
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => accept()}
+                sx={{
+                  m: 1,
+                  //color: "#FF5733",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: "rgba(255,255,255,0.9)",
+                    // transform: "translateY(-1px)",
+                    boxShadow: 3,
+                  },
+                }}
+              >
                 Guardar Cambios
-                </Button>
+              </Button>
             </Grid>
             <Grid item>
               <Typography variant="caption" color="text.secondary">

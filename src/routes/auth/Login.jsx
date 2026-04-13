@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -8,8 +8,13 @@ import {
   Link,
   Alert,
   CircularProgress,
-  Container
+  Container,
+  FormControlLabel,
+  Checkbox,
+  IconButton,
+  InputAdornment,
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
@@ -26,10 +31,24 @@ const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     ci: '',
     password: ''
   });
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Cargar datos guardados al iniciar
+  useEffect(() => {
+    const savedCredentials = localStorage.getItem('savedCredentials');
+    if (savedCredentials) {
+      const { ci, password, remember } = JSON.parse(savedCredentials);
+      if (remember) {
+        setFormData({ ci, password });
+        setRememberMe(true);
+      }
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -37,6 +56,43 @@ const Login = () => {
       ...prev,
       [name]: value
     }));
+    
+    // Limpiar error cuando el usuario empieza a escribir
+    if (error) setError('');
+  };
+
+  // Guardar datos en localStorage
+  const saveCredentials = (ci, password, remember) => {
+    if (remember) {
+      localStorage.setItem('savedCredentials', JSON.stringify({
+        ci,
+        password,
+        remember: true
+      }));
+    } else {
+      localStorage.removeItem('savedCredentials');
+    }
+  };
+
+  // Guardar sesión actual
+  const saveCurrentSession = (userData) => {
+    const sessionData = {
+      user: userData,
+      loginTime: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 horas
+    };
+    localStorage.setItem('currentSession', JSON.stringify(sessionData));
+    sessionStorage.setItem('isLoggedIn', 'true');
+  };
+
+  // Verificar si la sesión ha expirado
+  const isSessionValid = () => {
+    const sessionData = localStorage.getItem('currentSession');
+    if (sessionData) {
+      const { expiresAt } = JSON.parse(sessionData);
+      return new Date(expiresAt) > new Date();
+    }
+    return false;
   };
 
   const handleSubmit = async (e) => {
@@ -51,13 +107,34 @@ const Login = () => {
     }
 
     try {
-      await authService.loginWithCI(formData.ci, formData.password);
-      //navigate('/');
+      const userData = await authService.loginWithCI(formData.ci, formData.password);
+      
+      // Guardar credenciales si "Recordarme" está activado
+      saveCredentials(formData.ci, formData.password, rememberMe);
+      
+      // Guardar sesión actual
+      saveCurrentSession(userData);
+      
+      // Redirigir según el rol o página anterior
+      const redirectTo = sessionStorage.getItem('redirectAfterLogin') || '/';
+      sessionStorage.removeItem('redirectAfterLogin');
+      navigate(redirectTo);
+      
     } catch (error) {
-      setError(error.message);
+      setError(error.message || 'Error al iniciar sesión');
+      // Limpiar cualquier dato de sesión inválido
+      localStorage.removeItem('currentSession');
+      sessionStorage.removeItem('isLoggedIn');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para limpiar datos guardados
+  const clearSavedCredentials = () => {
+    localStorage.removeItem('savedCredentials');
+    setFormData({ ci: '', password: '' });
+    setRememberMe(false);
   };
 
   return (
@@ -80,8 +157,26 @@ const Login = () => {
             </Typography>
             
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
+              <Alert 
+                severity="error" 
+                sx={{ mb: 2 }}
+                onClose={() => setError('')}
+              >
                 {error}
+              </Alert>
+            )}
+
+            {/* Indicador de sesión activa */}
+            {isSessionValid() && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Tienes una sesión activa. ¿Deseas continuar?
+                <Button 
+                  size="small" 
+                  onClick={() => navigate('/')}
+                  sx={{ ml: 1 }}
+                >
+                  Ir al inicio
+                </Button>
               </Alert>
             )}
 
@@ -94,9 +189,9 @@ const Login = () => {
                 name="ci"
                 value={formData.ci}
                 onChange={handleChange}
-                autoComplete="ci"
+                autoComplete="username"
                 autoFocus
-                inputProps={{ maxLength: 10 }}
+                inputProps={{ maxLength: 10, pattern: '[0-9]*' }}
                 placeholder="10 dígitos"
                 error={formData.ci && !authService.validateCI(formData.ci)}
                 helperText={
@@ -105,40 +200,132 @@ const Login = () => {
                     : ''
                 }
               />
+              
               <TextField
                 margin="normal"
                 required
                 fullWidth
                 name="password"
                 label="Contraseña"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={handleChange}
                 autoComplete="current-password"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Recordarme"
               />
               
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2 }}
+                sx={{ mt: 2, mb: 2 }}
                 disabled={loading}
                 size="large"
               >
                 {loading ? <CircularProgress size={24} /> : 'Iniciar Sesión'}
               </Button>
 
+              {/* Botón para limpiar datos guardados */}
+              {localStorage.getItem('savedCredentials') && (
+                <Box textAlign="center" sx={{ mb: 2 }}>
+                  <Button
+                    size="small"
+                    onClick={clearSavedCredentials}
+                    color="secondary"
+                  >
+                    Limpiar datos guardados
+                  </Button>
+                </Box>
+              )}
+
               <Box textAlign="center">
                 <Link component={RouterLink} to="/register" variant="body2">
                   ¿No tienes cuenta? Regístrate
                 </Link>
               </Box>
+              
+              <Box textAlign="center" sx={{ mt: 2 }}>
+                <Link component={RouterLink} to="/forgot-password" variant="body2">
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </Box>
             </Box>
           </Paper>
+          
+          {/* Indicador de almacenamiento local */}
+          <Typography variant="caption" color="textSecondary" sx={{ mt: 2 }}>
+            Tus datos de inicio de sesión se guardan de forma segura en tu navegador
+          </Typography>
         </Box>
       </Container>
     </ThemeProvider>
   );
+};
+
+// Servicio auxiliar para manejar localStorage
+export const storageService = {
+  // Guardar datos del usuario
+  setUserData: (userData) => {
+    localStorage.setItem('userData', JSON.stringify(userData));
+  },
+  
+  // Obtener datos del usuario
+  getUserData: () => {
+    const data = localStorage.getItem('userData');
+    return data ? JSON.parse(data) : null;
+  },
+  
+  // Guardar token de autenticación
+  setAuthToken: (token) => {
+    localStorage.setItem('authToken', token);
+  },
+  
+  // Obtener token
+  getAuthToken: () => {
+    return localStorage.getItem('authToken');
+  },
+  
+  // Cerrar sesión (limpiar todo)
+  logout: () => {
+    localStorage.removeItem('currentSession');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('authToken');
+    sessionStorage.removeItem('isLoggedIn');
+    // Opcional: mantener credenciales guardadas si "Recordarme" está activado
+    // No removemos 'savedCredentials' para mantener la funcionalidad de "Recordarme"
+  },
+  
+  // Verificar si hay sesión activa
+  hasActiveSession: () => {
+    const sessionData = localStorage.getItem('currentSession');
+    if (sessionData) {
+      const { expiresAt } = JSON.parse(sessionData);
+      return new Date(expiresAt) > new Date();
+    }
+    return false;
+  }
 };
 
 export default Login;

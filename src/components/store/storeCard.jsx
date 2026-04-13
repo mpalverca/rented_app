@@ -147,10 +147,10 @@ export default function StoreCard({ store, onStoreClick }) {
           gutterBottom
           sx={{ 
             fontWeight: "bold",
-            background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
+            //background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
             backgroundClip: "text",
             WebkitBackgroundClip: "text",
-            color: "transparent"
+           // color: "transparent"
           }}
         >
           {store.nombre}
@@ -237,12 +237,12 @@ export default function StoreCard({ store, onStoreClick }) {
             onStoreClick(store.id);
           }}
           sx={{
-            background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-            color: "white",
+           // background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
+            //color: "white",
             fontWeight: "bold",
             py: 1,
             "&:hover": {
-              background: "linear-gradient(45deg, #E64A19 30%, #FBC02D 90%)",
+             // background: "linear-gradient(45deg, #E64A19 30%, #FBC02D 90%)",
               transform: "translateY(-1px)",
             },
           }}

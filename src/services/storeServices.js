@@ -168,7 +168,7 @@ export const timerStoreServices = {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        console.log(docSnap.data().schedule);
+       // console.log(docSnap.data().schedule);
         return data.schedule || getDefaultSchedule(); // Retorna horario o uno por defecto
       } else {
         throw new Error("Tienda no encontrada");

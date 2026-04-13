@@ -15,8 +15,11 @@ import {
   Grid,
   Card,
   Chip,
+  IconButton,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import MapView from "../../../components/maps/mapView";
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 
 export const DialogCar = ({ open, title, setReturnDialog, carI, carR }) => {
   const [vehicleData, setVehicleData] = useState({
@@ -394,12 +397,67 @@ export const ReturnProduct = ({
   );
 };
 
+
 export const ViewLocation = ({ location, open, closeDialog }) => {
+  // Validar que location existe
+  if (!location) return null;
+
+  // Extraer latitud y longitud
+  const lat = Array.isArray(location) ? location[0] : location.lat;
+  const lng = Array.isArray(location) ? location[1] : location.lng;
+
+  const position = [lat, lng];
+
   return (
-    <Dialog maxWidth="md" open={open} onClose={() => closeDialog(false)}>
-      <DialogTitle>Ubicación en el mapa</DialogTitle>
-      <DialogContent>
-        <MapView position={location} height="100%" />
+    <Dialog 
+      open={open} 
+      onClose={() => closeDialog(false)}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          overflow: "hidden",
+        }
+      }}
+    >
+      <DialogTitle sx={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center",
+        bgcolor: "#f5f5f5",
+        py: 1.5
+      }}>
+        <Typography variant="h6" fontWeight="bold">
+          📍 Ubicación de Entrega
+        </Typography>
+        <IconButton onClick={() => closeDialog(false)} size="small">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      
+      <DialogContent sx={{ p: 0, height: 400 }}>
+        <MapContainer
+          center={position}
+          zoom={15}
+          style={{ height: "100%", width: "100%" }}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <Marker position={position}>
+            <Popup>
+              <Typography variant="body2">
+                <strong>📍 Ubicación seleccionada</strong>
+                <br />
+                Lat: {lat.toFixed(6)}
+                <br />
+                Lng: {lng.toFixed(6)}
+              </Typography>
+            </Popup>
+          </Marker>
+        </MapContainer>
       </DialogContent>
     </Dialog>
   );

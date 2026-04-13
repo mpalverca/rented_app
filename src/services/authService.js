@@ -28,7 +28,7 @@ const mapAuthError = (error) => {
       return 'Credenciales inválidas. Usuario no encontrado.';
     case 'auth/wrong-password':
     case 'auth/invalid-credential': // Para versiones más recientes de Firebase
-      return 'Credenciales inválidas. La contraseña es incorrecta.';
+      return 'Credenciales inválidas. Identificación o la contraseña son incorrectas.';
     case 'auth/too-many-requests':
       return 'Acceso bloqueado temporalmente debido a demasiados intentos fallidos. Intenta más tarde.';
     default:
@@ -129,8 +129,9 @@ export const authService = {
   async loginWithCI(ci, password) {
     // 1. Buscar email asociado a la CI
     const email = await this.getEmailByCI(ci);
+ //   console.log('🔍 Email encontrado:', email);
     if (!email) {
-      throw new Error('Cédula no registrada.');
+      throw new Error('Cédula o contraseña incorrecta');
     }
 
     // 2. Iniciar sesión con email y password
@@ -167,12 +168,14 @@ export const authService = {
 
   async getEmailByCI(ci) {
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('ci', '==', ci));
+   
+    const q = query(usersRef, where('ci', '==', Number(ci)));
     const querySnapshot = await getDocs(q);
-    
+
     if (!querySnapshot.empty) {
       // Debería haber solo un documento si 'ci' es único
       return querySnapshot.docs[0].data().email;
+
     }
     return null;
   },

@@ -60,13 +60,13 @@ const navigate = useNavigate()
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container sx={{ py: 2 }}>
       {/* Header con gradiente */}
       <Box
         sx={{
-          background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
+         // background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
           borderRadius: 3,
-          color: "white",
+          //color: "white",
           textAlign: "center",
           p: 1,
           mb: 1

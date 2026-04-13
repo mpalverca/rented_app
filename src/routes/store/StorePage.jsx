@@ -157,7 +157,7 @@ export default function StoreProfile() {
 
             {/* Información Principal */}
             <Grid item size={{ xs: 12, md: 8 }}>
-              <Typography variant="h3" gutterBottom fontWeight="bold">
+              <Typography variant="h4" gutterBottom fontWeight="bold">
                 {store.nombre}
               </Typography>
               <Typography variant="body1" sx={{ mb: 0, opacity: 0.9 }}>

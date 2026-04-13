@@ -10,9 +10,11 @@ import {
   Paper,
   Chip,
   Typography,
-  Button
+  Button,
+  TextField,
+  InputAdornment
 } from "@mui/material";
-import { ArrowForward, CalendarToday, Inventory, LocalShipping, Store } from "@mui/icons-material";
+import { ArrowForward, CalendarToday, Inventory, LocalShipping, Store, Search, Clear } from "@mui/icons-material";
 
 const STATE_COLORS = {
   iniciado: "primary",
@@ -24,8 +26,8 @@ const STATE_COLORS = {
 
 const STATE_LABELS = {
   iniciado: "Iniciado",
-  confirmado: "Confirmado",
-  en_camino: "En Camino", 
+  aceptado: "Aceptado",
+  enviado: "Eviado", 
   entregado: "Entregado",
   completado: "Completado"
 };
@@ -33,34 +35,58 @@ const STATE_LABELS = {
 export default function RentedStore() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [searchTerm, setSearchTerm] = useState("");
   const [rentedItems, setRentedItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
   const navigate = useNavigate();
   const { storeId } = useParams();
+
   useEffect(() => {
     loadRentedData();
   }, [storeId]);
+
+  // Filtrar items cuando cambie searchTerm o rentedItems
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredItems(rentedItems);
+    } else {
+      const filtered = rentedItems.filter(item =>
+        item.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.client?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.client?.ci?.toString().toLowerCase().includes(searchTerm.toLowerCase())||
+        STATE_LABELS[item.state]?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.total?.toString().includes(searchTerm)
+      );
+      setFilteredItems(filtered);
+    }
+  }, [searchTerm, rentedItems]);
+
   const loadRentedData = async () => {
     try {
       setLoading(true);
       const rented = await rentedServices.getAllStoreRented(storeId);
-      //const product = await cartService.getCartProductsDetails(cart);
-      //console.log(rented);
-      setRentedItems(rented)
-      //setReted(product);
+      setRentedItems(rented);
+      setFilteredItems(rented); // Inicializar filteredItems
     } catch (err) {
       setError("Error cargando el carrito: " + err.message);
     } finally {
       setLoading(false);
     }
   };
-   const formatDate = (dateString) => {
+
+  const formatDate = (dateString) => {
     if (!dateString) return "Fecha no definida";
     return new Date(dateString).toLocaleDateString('es-ES');
   };
-const handleViewDetails = (rentedId) => {
+
+  const handleViewDetails = (rentedId) => {
     navigate(`/my_store/${storeId}/rented/rented_detail/${rentedId}`);
   };
+
+  const handleClearSearch = () => {
+    setSearchTerm("");
+  };
+
   if (error) {
     return (
       <Box p={3}>
@@ -70,10 +96,51 @@ const handleViewDetails = (rentedId) => {
   }
 
   return (
-    <Box sx={{ p: 0, /*  maxWidth: 1200, */ margin: "0 auto" }}>
+    <Box sx={{ p: 0, margin: "0 auto" }}>
       <Typography variant="h4" gutterBottom color="primary">
         Mis Alquileres
       </Typography>
+
+      {/* Barra de búsqueda */}
+      <Card sx={{ mb: 3, p: 2 }}>
+        <TextField
+          fullWidth
+          placeholder="Buscar por ID, cliente, cédula, estado o total..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search color="action" />
+              </InputAdornment>
+            ),
+            endAdornment: searchTerm && (
+              <InputAdornment position="end">
+                <Button
+                  size="small"
+                  onClick={handleClearSearch}
+                  sx={{ minWidth: 'auto', p: 0.5 }}
+                >
+                  <Clear fontSize="small" />
+                </Button>
+              </InputAdornment>
+            ),
+          }}
+          sx={{ mb: 1 }}
+        />
+        
+        {/* Información de resultados */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            {filteredItems.length} de {rentedItems.length} alquileres encontrados
+          </Typography>
+          {searchTerm && (
+            <Typography variant="caption" color="primary">
+              Buscando: "{searchTerm}"
+            </Typography>
+          )}
+        </Box>
+      </Card>
 
       {rentedItems.length === 0 ? (
         <Paper sx={{ p: 4, textAlign: "center" }}>
@@ -85,9 +152,26 @@ const handleViewDetails = (rentedId) => {
             Cuando realices un alquiler, aparecerá aquí.
           </Typography>
         </Paper>
+      ) : filteredItems.length === 0 ? (
+        <Paper sx={{ p: 4, textAlign: "center" }}>
+          <Search sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No se encontraron alquileres
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            No hay resultados para "{searchTerm}"
+          </Typography>
+          <Button 
+            variant="outlined" 
+            onClick={handleClearSearch}
+            sx={{ mt: 2 }}
+          >
+            Limpiar búsqueda
+          </Button>
+        </Paper>
       ) : (
         <Grid container spacing={3}>
-          {rentedItems.map((item) => (
+          {filteredItems.map((item) => (
             <Grid item size={{ xs: 12 }} key={item.id}>
               <Card
                 sx={{
@@ -157,8 +241,6 @@ const handleViewDetails = (rentedId) => {
                       </Box>
                     </Grid>
                   </Grid>
-
-                  {/* Productos en lista (solo nombres) */}
                 </CardContent>
               </Card>
             </Grid>

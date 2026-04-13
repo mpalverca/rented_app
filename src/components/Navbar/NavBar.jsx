@@ -39,7 +39,7 @@ export default function ResponsiveNavBar() {
 
   const userSettings = [
     { name: "Perfil", path: `/my_profile/${user?.uid}` },
-    { name: "Pedidos", path: `/my_profile/${user?.uid}/my_cart` },    
+    { name: "Pedidos", path: `/my_profile/${user?.uid}/my_cart` },
     { name: "Servicios", path: "/my_services" },
     { name: "Mi Tienda", path: `/my_store/${userData?.store}` },
   ];
@@ -94,25 +94,31 @@ export default function ResponsiveNavBar() {
   if (loading) {
     return (
       <AppBar
-        position="static"
-        style={{
+        position="fixed"
+        sx={{
+       
           background: "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)",
         }}
       >
-        <Container maxWidth="xl">
-          <Toolbar disableGutters>
-            <Typography
-              variant="h6"
-              sx={{
-                flexGrow: 1,
-                textAlign: "center",
-                color: "inherit",
-              }}
-            >
-              Cargando...
-            </Typography>
-          </Toolbar>
-        </Container>
+        <Toolbar
+        
+          disableGutters
+          sx={{
+            minHeight: { xs: "56px", sm: "64px", md: "70px" }, // Personalizar altura
+            py: 1, // Padding vertical reducido
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              flexGrow: 1,
+              textAlign: "center",
+              color: "inherit",
+            }}
+          >
+            Cargando...
+          </Typography>
+        </Toolbar>
       </AppBar>
     );
   }
@@ -121,10 +127,23 @@ export default function ResponsiveNavBar() {
     <AppBar
       position="static"
       //sx={{position:"fixed"}}
-      style={{ background: "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)" }}
+      sx={{
+        //background: "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)",
+        //background: "linear-gradient(45deg, #a59c9a 20%, #c9c6be 90%)",
+        height: { xs: "60px", sm: "70px" }, // Altura responsive
+        display: "flex",
+        justifyContent: "center",
+      }}
     >
       <Container maxWidth="xl">
-        <Toolbar disableGutters>
+        <Toolbar
+          disableGutters
+          sx={{
+            minHeight: "100% !important", // Forzar altura completa
+            //    py: 0.5, // Padding vertical reducido
+            // px: { xs: 1, sm: 2 } // Padding horizontal responsive
+          }}
+        >
           {/* Título - versión desktop */}
           <Typography
             variant="h4"
@@ -219,6 +238,30 @@ export default function ResponsiveNavBar() {
             </Typography>
           </Box>
           {/* Menú principal - versión desktop */}
+         
+         <Box
+              sx={{
+                // background: "linear-gradient(45deg, #FF5733 20%, #FFD700 90%)",
+                // borderRadius: 3,
+                //p: 1,
+                //mb: 1,
+                textAlign: "center",
+                color: "white",
+              }}
+            >
+              <Typography
+                variant="h6"
+                component="h1"
+                //gutterBottom
+                sx={{ fontWeight: "bold" }}
+              >
+                ALquiler-CONstrucción
+              </Typography>
+              <Typography variant="subtitle2" sx={{ mb: 0, opacity: 0.9 }}>
+                Encuentra todo lo que necesitas para alquilar en un solo lugar
+              </Typography>
+            </Box>
+
           <Box
             sx={{
               flexGrow: 1,
@@ -226,6 +269,7 @@ export default function ResponsiveNavBar() {
               justifyContent: "center",
             }}
           >
+            
             {pages.map((page) => (
               <Button
                 key={page.name}
@@ -336,7 +380,7 @@ export default function ResponsiveNavBar() {
                     </MenuItem>
                   ))}
 
-                <Divider/>
+                  <Divider />
                   {/* Botón de cerrar sesión */}
                   <MenuItem
                     onClick={handleLogout}

@@ -11,10 +11,10 @@ import NavBar from "../components/Navbar/NavBar";
 import { AuthProvider } from "../context/AuthContext";
 import Register from "./auth/Register";
 import CreateStore from "./store/createStore";
-import Inventary from "./store/inventory";
+import Inventary from "./store/inventory/inventory";
 import ProductPage from "./store/product/productPage";
 import Profile from "./profile/Profile";
-import Cart from "./profile/cart";
+import Cart from "./profile/cart/cart";
 import StorePage from "./store/StorePage";
 import Horarios from "./store/product/timer/horarios";
 import RentedPage from "./profile/rented/rentedPage";
@@ -22,6 +22,7 @@ import RentedStore from "./store/rented/rented";
 import RentedDetail from "./profile/rented/rentedDetail";
 import RentedDetailStore from "./store/rented/rentedDetail";
 import Stores from "./stores";
+import AddProduct from "../Pages/inventory/addProduct";
 
 export default class index extends Component {
   render() {
@@ -65,7 +66,16 @@ export default class index extends Component {
                 </ProtectedRoute>
               }
             >
+              {" "}
               <Route path="inventary" element={<Inventary />} />
+              <Route
+                path="inventary/edit_product/:productId"
+                element={<AddProduct />}
+              />
+              <Route
+                path="inventary/add_product"
+                element={<AddProduct />}
+              />
               <Route path="timer" element={<Horarios />} />
               <Route path="rented" element={<RentedStore />} />
               <Route
@@ -91,7 +101,7 @@ export default class index extends Component {
             <Route path="*" element={<NotFoud />} />
 
             <Route path="/stores" element={<Stores />} />
-           <Route path="/store/:storeId/*" element={<StorePage />} />
+            <Route path="/store/:storeId/*" element={<StorePage />} />
             <Route path="/product/:productId" element={<ProductPage />} />
             {/*    //auth*/}
           </Routes>

@@ -2,16 +2,15 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  Stepper,
-  Step,
-  StepLabel,
+  Paper,
   Card,
   CardContent,
   Chip,
   Grid,
   Alert,
   CircularProgress,
-  Badge,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   CalendarToday,
@@ -20,6 +19,9 @@ import {
   AssignmentReturn,
   CarRentalOutlined,
   Payment,
+  Pending,
+  CheckCircle,
+  LocalActivity,
 } from "@mui/icons-material";
 import rentedServices from "../../../services/rentedServices";
 import { useParams } from "react-router-dom";
@@ -28,15 +30,45 @@ import { DialogCar, ReturnProduct, ViewLocation } from "./dialogRented";
 import RentedTable from "./rentedTable";
 import Notes from "./Notes";
 import { EditDate } from "./dialogDate";
+import Head from "../../profile/rented/head";
 
 // Estados del pedido
 const ORDER_STEPS = [
-  { label: "Iniciado", key: "iniciado" },
-  { label: "Aceptado", key: "aceptado" },
-  { label: "Enviado", key: "enviado" },
-  { label: "Retorno", key: "retorno" },
-  { label: "Cerrado", key: "cerrado" },
+  { label: "Iniciado", key: "iniciado", icon: <Pending />, color: "#ff9800" },
+  {
+    label: "Confirmado",
+    key: "confirmado",
+    icon: <CheckCircle />,
+    color: "#2196f3",
+  },
+  {
+    label: "En Camino",
+    key: "en_camino",
+    icon: <LocalShipping />,
+    color: "#1976d2",
+  },
+  {
+    label: "Entregado",
+    key: "entregado",
+    icon: <LocalActivity />,
+    color: "#4caf50",
+  },
+  {
+    label: "Completado",
+    key: "completado",
+    icon: <CheckCircle />,
+    color: "#4caf50",
+  },
 ];
+
+const STATE_COLORS = {
+  iniciado: { bg: "#fff3e0", color: "#ff9800", label: "Iniciado" },
+  confirmado: { bg: "#e3f2fd", color: "#2196f3", label: "Confirmado" },
+  en_camino: { bg: "#e8eaf6", color: "#1976d2", label: "En Camino" },
+  entregado: { bg: "#e8f5e9", color: "#4caf50", label: "Entregado" },
+  completado: { bg: "#e8f5e9", color: "#4caf50", label: "Completado" },
+  cancelado: { bg: "#ffebee", color: "#f44336", label: "Cancelado" },
+};
 
 export default function RentedDetailStore() {
   const [rentedItem, setRentedItem] = useState(null);
@@ -51,20 +83,48 @@ export default function RentedDetailStore() {
   const [openDate, setOpenDate] = useState(false);
   const { userId, rentedId } = useParams();
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const handleShare = async () => {
+    const shareData = {
+      title: `Alquiler #${String(rentedItem.id).slice(-8)}`,
+      text: `Mi alquiler por ${rentedItem.days} días`,
+      url: window.location.href,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Error sharing:", err);
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   useEffect(() => {
     loadRentedData();
   }, [rentedId]);
 
   // Cálculo del total - CORREGIDO
-  const totalProduct = products.reduce(
-    (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
-    0
-  );
+ const totalProduct = products.reduce(
+  (sum, item) => {
+    // Si el producto es extra (sin costo), no lo sumamos
+    if (item.extra === true) {
+      return sum;
+    }
+    return sum + (item.subproducto?.price || item.price || 0) * (item.quantity || 0);
+  },
+  0,
+);
 
-  const total =
-    rentedItem?.total === totalProduct ? rentedItem?.total : totalProduct;
-  const totalConDias = total * (rentedItem?.days || 1);
-
+const total =
+  rentedItem?.total === totalProduct ? rentedItem?.total : totalProduct;
+const totalConDias = total * (rentedItem?.days || 1);
   const loadRentedData = async () => {
     try {
       setLoading(true);
@@ -111,7 +171,7 @@ export default function RentedDetailStore() {
       newQuantities[product.id] = event.target.checked
         ? Math.min(
             product.quantity - product.returnedQuantity,
-            product.quantity
+            product.quantity,
           )
         : 0;
     });
@@ -137,7 +197,7 @@ export default function RentedDetailStore() {
         ...prev,
         [productId]: Math.min(
           productItem.quantity - productItem.returnedQuantity,
-          productItem.quantity
+          productItem.quantity,
         ),
       }));
     }
@@ -176,7 +236,7 @@ export default function RentedDetailStore() {
 
   const getActiveStep = () => {
     const stepIndex = ORDER_STEPS.findIndex(
-      (step) => step.key === rentedItem?.state
+      (step) => step.key === rentedItem?.state,
     );
     return stepIndex >= 0 ? stepIndex : 0;
   };
@@ -193,9 +253,9 @@ export default function RentedDetailStore() {
     await rentedServices.acceptRented(
       rentedId,
       products,
-      rentedItem.store.nombre
+      rentedItem.store.nombre,
     );
-    console.log("se ejecuto")
+    console.log("se ejecuto");
   };
   if (loading) {
     return (
@@ -233,109 +293,98 @@ export default function RentedDetailStore() {
   return (
     <Box sx={{ p: 1, margin: "0 auto" }}>
       {/* Header con gradiente */}
-      <Box
-        sx={{
-          mb: 3,
-          background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-          borderRadius: 3,
-          color: "white",
-          textAlign: "center",
-          p: 3, // Agregué padding para mejor visualización
-        }}
-      >
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold" }}>
-          Detalle del Alquiler #{rentedItem.id.slice(-8).toUpperCase()}
+      <Head
+        rentedItem={rentedItem}
+        getActiveStep={getActiveStep}
+        isMobile={isMobile}
+        ORDER_STEPS={ORDER_STEPS}
+        handleShare={handleShare}
+        handlePrint={handlePrint}
+      />
+      <Paper sx={{ p: 1, mb: 1 }}>
+        <Typography
+          variant="h5"
+          sx={{ p: 2, fontWeight: "bold", color: "#333" }}
+        >
+          Cliente: {rentedItem.clientName}
         </Typography>
-      </Box>
-
-      {/* Stepper del estado del pedido */}
-      <Card
-        sx={{
-          mb: 3,
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 3,
-          overflow: "hidden",
-        }}
-      >
-        <CardContent sx={{ py: 2 }}>
-          <Stepper activeStep={getActiveStep()} alternativeLabel>
-            {ORDER_STEPS.map((step) => (
-              <Step key={step.key}>
-                <StepLabel
-                  sx={{
-                    "& .MuiStepLabel-label": {
-                      fontWeight: "bold",
-                      fontSize: "0.9rem",
-                    },
-                  }}
-                >
-                  {step.label}
-                </StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        </CardContent>
-      </Card>
-
-      <Grid container spacing={2}>
+      </Paper>
+      <Grid container spacing={2} sx={{ mb: 2 }}>
         {/* Información del alquiler */}
         <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
           <Card
             sx={{
-              height: "80%",
+              height: "100%",
               border: "1px solid",
               borderColor: "divider",
               borderRadius: 2,
               transition: "all 0.3s ease",
+              cursor: "pointer",
               "&:hover": {
-                transform: "translateY(-2px)",
+                transform: "translateY(-4px)",
                 boxShadow: 3,
+                borderColor: "#FF5733",
               },
             }}
             onClick={() => setOpenDate(true)}
           >
             <CardContent>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{
-                  display: "flex",
-                  alignContent: "space-around",
-                  alignItems: "center",
-                  fontWeight: "bold",
-                  background:
-                    "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-                  backgroundClip: "text",
-                  WebkitBackgroundClip: "text",
-                  color: "transparent",
-                }}
-              >
-                <CalendarToday sx={{ mr: 1 }} />
-                Fechas del Alquiler
-              </Typography>
-              <Chip
-                icon={<LocalShipping />}
-                label={`${rentedItem.days} días`}
-                variant="outlined"
-                size="small"
-                sx={{
-                  borderColor: "#FF5733",
-                  color: "#FF5733",
-                  fontWeight: "bold",
-                }}
-              />
-              <Box>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <CalendarToday sx={{ mr: 1, color: "#FF5733", fontSize: 24 }} />
                 <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 0.5 }}
+                  variant="h6"
+                  sx={{ fontWeight: "bold", color: "#333" }}
                 >
-                  📅 Inicio: {formatDate(rentedItem.dates.dateInit)}
+                  Fechas del Alquiler
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  📅 Fin: {formatDate(rentedItem.dates.dateEnd)}
-                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Chip
+                  icon={<LocalShipping />}
+                  label={`${rentedItem.days} días`}
+                  size="small"
+                  sx={{
+                    bgcolor: "#FF5733",
+                    color: "white",
+                    fontWeight: "bold",
+                    mb: 1.5,
+                    "& .MuiChip-icon": { color: "white" },
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ spaceY: 1 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "#666", minWidth: 45 }}
+                  >
+                    📅 Inicio:
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "#333", fontWeight: 500 }}
+                  >
+                    {formatDate(rentedItem.dates.dateInit)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "#666", minWidth: 45 }}
+                  >
+                    📅 Fin:
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "#333", fontWeight: 500 }}
+                  >
+                    {formatDate(rentedItem.dates.dateEnd)}
+                  </Typography>
+                </Box>
               </Box>
             </CardContent>
           </Card>
@@ -347,52 +396,54 @@ export default function RentedDetailStore() {
             <Card
               onClick={() => setMapDialog(true)}
               sx={{
-                height: "80%",
+                height: "100%",
                 border: "1px solid",
                 borderColor: "divider",
                 borderRadius: 2,
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 "&:hover": {
-                  transform: "translateY(-2px)",
+                  transform: "translateY(-4px)",
                   boxShadow: 3,
                   borderColor: "#FF5733",
                 },
               }}
             >
               <CardContent>
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    fontWeight: "bold",
-                    background:
-                      "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-                    backgroundClip: "text",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent",
-                  }}
-                >
-                  <LocationOn sx={{ mr: 1 }} />
-                  Ubicación
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <LocationOn sx={{ mr: 1, color: "#FF5733", fontSize: 24 }} />
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: "bold", color: "#333" }}
+                  >
+                    Ubicación
+                  </Typography>
+                </Box>
+
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  //sx={{ mb: 1 }}
+                  sx={{
+                    color: "#666",
+                    mb: 2,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    lineHeight: 1.5,
+                  }}
                 >
                   {rentedItem.reference}
                 </Typography>
+
                 <Chip
                   icon={<LocationOn />}
                   label="Ver Mapa"
                   size="small"
-                  variant="outlined"
                   sx={{
-                    borderColor: "#FF5733",
+                    border: "1px solid #FF5733",
                     color: "#FF5733",
+                    bgcolor: "transparent",
+                    "&:hover": { bgcolor: "rgba(255, 87, 51, 0.05)" },
                   }}
                 />
               </CardContent>
@@ -406,49 +457,90 @@ export default function RentedDetailStore() {
             <Card
               onClick={() => setCarView(true)}
               sx={{
-                height: "80%",
+                height: "100%",
                 border: "1px solid",
                 borderColor: "divider",
                 borderRadius: 2,
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 "&:hover": {
-                  transform: "translateY(-2px)",
+                  transform: "translateY(-4px)",
                   boxShadow: 3,
                   borderColor: "#FF5733",
                 },
               }}
             >
               <CardContent>
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    fontWeight: "bold",
-                    background:
-                      "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-                    backgroundClip: "text",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent",
-                  }}
-                >
-                  <CarRentalOutlined sx={{ mr: 1 }} />
-                  Transporte
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 0.5 }}
-                >
-                  🚚 Envío:{" "}
-                  {rentedItem.carInit.requiere ? "Requerido" : "No requerido"}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  🔄 Retorno:{" "}
-                  {rentedItem.carEnd?.requiere ? "Requerido" : "No requerido"}
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <CarRentalOutlined
+                    sx={{ mr: 1, color: "#FF5733", fontSize: 24 }}
+                  />
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: "bold", color: "#333" }}
+                  >
+                    Transporte
+                  </Typography>
+                </Box>
+
+                <Box sx={{ spaceY: 1 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 1.5,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "#666", minWidth: 55 }}
+                    >
+                      🚚 Envío:
+                    </Typography>
+                    <Chip
+                      label={
+                        rentedItem.carInit.requiere
+                          ? "Requerido"
+                          : "No requerido"
+                      }
+                      size="small"
+                      sx={{
+                        bgcolor: rentedItem.carInit.requiere
+                          ? "#FF5733"
+                          : "#4CAF50",
+                        color: "white",
+                        fontSize: "0.7rem",
+                        height: 24,
+                      }}
+                    />
+                  </Box>
+
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "#666", minWidth: 55 }}
+                    >
+                      🔄 Retorno:
+                    </Typography>
+                    <Chip
+                      label={
+                        rentedItem.carEnd?.requiere
+                          ? "Requerido"
+                          : "No requerido"
+                      }
+                      size="small"
+                      sx={{
+                        bgcolor: rentedItem.carEnd?.requiere
+                          ? "#FF5733"
+                          : "#4CAF50",
+                        color: "white",
+                        fontSize: "0.7rem",
+                        height: 24,
+                      }}
+                    />
+                  </Box>
+                </Box>
               </CardContent>
             </Card>
           )}
@@ -458,56 +550,69 @@ export default function RentedDetailStore() {
         <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
           <Card
             sx={{
-              height: "80%",
+              height: "100%",
               border: "1px solid",
               borderColor: "divider",
               borderRadius: 2,
               transition: "all 0.3s ease",
               "&:hover": {
-                transform: "translateY(-2px)",
+                transform: "translateY(-4px)",
                 boxShadow: 3,
               },
             }}
           >
             <CardContent>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  fontWeight: "bold",
-                  background:
-                    "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-                  backgroundClip: "text",
-                  WebkitBackgroundClip: "text",
-                  color: "transparent",
-                }}
-              >
-                <Payment sx={{ mr: 1 }} />
-                Pagos
-              </Typography>
-              <Chip
-                label={rentedItem.statepay ? "Pagado" : "Sin pagar"}
-                color={rentedItem.statepay ? "success" : "warning"}
-                variant="outlined"
-                sx={{ mb: 1, fontWeight: "bold" }}
-              />
-              <Chip
-                label={`Total: $${totalConDias}`}
-                color="primary"
-                variant="outlined"
-                sx={{ mb: 1, fontWeight: "bold" }}
-              />
-              <Chip
-                label={`Pagado: $${rentedItem.payed || 0}`}
-                color={rentedItem.statepay ? "success" : "warning"}
-                variant="outlined"
-                sx={{ mb: 1, fontWeight: "bold" }}
-              />
-              <Typography variant="body2" color="text.secondary">
-                Método: {rentedItem.typePay}
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Payment sx={{ mr: 1, color: "#FF5733", fontSize: 24 }} />
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: "bold", color: "#333" }}
+                >
+                  Pagos
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+                <Chip
+                  label={rentedItem.statepay ? "Pagado" : "Sin pagar"}
+                  sx={{
+                    bgcolor: rentedItem.statepay ? "#4CAF50" : "#FF9800",
+                    color: "white",
+                    fontWeight: "bold",
+                  }}
+                />
+                <Chip
+                  label={`Total: $${totalConDias}`}
+                  sx={{
+                    bgcolor: "#2196F3",
+                    color: "white",
+                    fontWeight: "bold",
+                  }}
+                />
+                <Chip
+                  label={`Pagado: $${rentedItem.payed || 0}`}
+                  sx={{
+                    bgcolor: rentedItem.statepay ? "#4CAF50" : "#FF9800",
+                    color: "white",
+                    fontWeight: "bold",
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#666", minWidth: 65 }}
+                >
+                  Método:
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#333", fontWeight: 500 }}
+                >
+                  {rentedItem.typePay}
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
@@ -562,6 +667,9 @@ export default function RentedDetailStore() {
         days={rentedItem.days}
         store={rentedItem.store}
         state={rentedItem.state}
+        rentedId={rentedId}
+        setRentedItem={setRentedItem}
+        //setRentedItem={setRentedItem}
       />
 
       <ViewLocation

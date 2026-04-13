@@ -9,12 +9,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Paper,
 } from "@mui/material";
 import { Search, FilterList } from "@mui/icons-material";
 
 const FilterBarHome = ({searchTerm,setSearchTerm,categoryFilter,setCategoryFilter,categories,sortBy,setSortBy,filteredProducts}) => {
   return (
-    <Box sx={{ mb: 4 }}>
+    <Paper elevation={2} sx={{ mb: 2, p:2, border: 1, borderRadius:'16px'}}>
       <Grid container spacing={3} alignItems="center">
         <Grid item size={{ xs: 12, md: 4 }}>
           <TextField
@@ -87,7 +88,7 @@ const FilterBarHome = ({searchTerm,setSearchTerm,categoryFilter,setCategoryFilte
           </Box>
         </Grid>
       </Grid>
-    </Box>
+    </Paper>
   );
 };
 

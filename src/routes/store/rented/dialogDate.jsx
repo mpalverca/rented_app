@@ -1,22 +1,15 @@
 import {
-
   Box,
- 
   Button,
-
   Dialog,
   DialogContent,
   DialogTitle,
-
   DialogActions,
-
   Typography,
- 
   Grid,
- 
   CircularProgress,
- 
   Alert,
+  TextField,
 } from "@mui/material";
 
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
@@ -24,15 +17,98 @@ import { timerStoreServices } from "../../../services/storeServices";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { es } from "date-fns/locale";
 import { useEffect, useState } from "react";
+import rentedServices from "../../../services/rentedServices";
 
-export const EditDate = ({ open, handleCloseDialog, dates, days, store, onDateUpdate,state }) => {
+export const EditDate = ({
+  open,
+  handleCloseDialog,
+  dates,
+  days,
+  store,
+  onDateUpdate,
+  state,
+  rentedId,
+  setRentedItem,
+}) => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [calculatedDays, setCalculatedDays] = useState(0);
   const [storeSchedule, setStoreSchedule] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-console.log(store)
+  const [motive, setMotive] = useState(" ");
+  const formatDate = (date) => {
+    return date
+      ? date.toLocaleDateString("es-ES", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      : "";
+  };
+  const handleSave = async () => {
+    // CORRECCIÓN: Usar === en lugar de =
+    if (motive == null || motive === " " || motive.trim() === "") {
+      setError("motivo es requerido");
+      return;
+    }
+
+    if (!startDate || !endDate) {
+      setError("Ambas fechas son requeridas");
+      return;
+    }
+
+    if (startDate > endDate) {
+      setError("La fecha de inicio no puede ser posterior a la fecha de fin");
+      return;
+    }
+
+    // Formatear fechas para enviar
+    const updatedDates = {
+      dateInit: startDate.toISOString(),
+      dateEnd: endDate.toISOString(),
+    };
+    const note = {
+      id: Date.now().toString(),
+      by: store.nombre,
+      date: new Date().toISOString(),
+      note:
+        "La fecha ha sido cambiada del dia " +
+        formatDate(startDate) +
+        " al dia " +
+        formatDate(endDate) +
+        " con " +
+        calculatedDays +
+        " dias de uso, por motivo de " +
+        motive,
+    };
+    // Actualizar estado local
+    setRentedItem((prev) => ({
+      ...prev,
+      dates: updatedDates, // CORRECCIÓN: Usar updatedDates en lugar de dates
+      days: calculatedDays,
+      notes: [...(prev.notes || []), note],
+    }));
+
+    // Llamar callback para actualizar en el componente padre
+    if (onDateUpdate) {
+      onDateUpdate(updatedDates, calculatedDays);
+    }
+
+    // Llamar servicio para actualizar en Firebase
+    await rentedServices.changeDatesRented(
+      rentedId,
+      updatedDates,
+      calculatedDays,
+      store.nombre,
+      motive,
+      note
+    );
+
+    handleCloseDialog();
+  };
+
   // Cargar el horario de la tienda
   useEffect(() => {
     const loadStoreSchedule = async () => {
@@ -40,7 +116,6 @@ console.log(store)
         try {
           setLoading(true);
           const schedule = await timerStoreServices.getStoreSchedule(store.id);
-          console.log(schedule)
           setStoreSchedule(schedule);
         } catch (err) {
           setError("Error cargando horario de la tienda");
@@ -61,10 +136,10 @@ console.log(store)
     if (open && dates) {
       const initStartDate = new Date(dates.dateInit);
       const initEndDate = new Date(dates.dateEnd);
-      
+
       setStartDate(initStartDate);
       setEndDate(initEndDate);
-      
+
       // Calcular días iniciales
       const diffTime = Math.abs(initEndDate - initStartDate);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -98,40 +173,6 @@ console.log(store)
     setError("");
   };
 
-  const handleSave = () => {
-    if (!startDate || !endDate) {
-      setError("Ambas fechas son requeridas");
-      return;
-    }
-
-    if (startDate > endDate) {
-      setError("La fecha de inicio no puede ser posterior a la fecha de fin");
-      return;
-    }
-
-    // Formatear fechas para enviar
-    const updatedDates = {
-      dateInit: startDate.toISOString(),
-      dateEnd: endDate.toISOString(),
-    };
-
-    // Llamar callback para actualizar en el componente padre
-    if (onDateUpdate) {
-      onDateUpdate(updatedDates, calculatedDays);
-    }
-
-    handleCloseDialog();
-  };
-
-  const formatDate = (date) => {
-    return date ? date.toLocaleDateString("es-ES", {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }) : "";
-  };
-
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
       <Dialog open={open} onClose={handleCloseDialog} maxWidth="md" fullWidth>
@@ -145,10 +186,10 @@ console.log(store)
         >
           Editar Fechas del Alquiler
         </DialogTitle>
-        
+
         <DialogContent sx={{ py: 3 }}>
           {loading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
               <CircularProgress />
             </Box>
           )}
@@ -160,93 +201,115 @@ console.log(store)
           )}
 
           {/* Información del horario de la tienda */}
-          {/* Información del horario de la tienda - Versión con chips */}
-{storeSchedule && storeSchedule.length > 0 && (
-  <Box sx={{ mb: 3, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
-    <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-      📅 Horario de la Tienda
-    </Typography>
-    
-    <Grid container spacing={1}>
-      {storeSchedule
-        .filter(day => day.enabled)
-        .map((daySchedule, index) => (
-          <Grid item size={{xs:12, sm:6, md:4 }}key={daySchedule.day || index}>
-            <Box 
-              sx={{ 
-                p: 1, 
-                border: '1px solid', 
-                borderColor: 'divider', 
-                borderRadius: 1,
-                backgroundColor: 'white'
-              }}
+          {storeSchedule && storeSchedule.length > 0 && (
+            <Box
+              sx={{ mb: 3, p: 2, backgroundColor: "grey.50", borderRadius: 1 }}
             >
-              <Typography variant="body2" fontWeight="bold" color="primary.main">
-                {daySchedule.day}
+              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                📅 Horario de la Tienda
               </Typography>
-              
-              {daySchedule.time_am && daySchedule.time_am.length === 2 && (
-                <Typography variant="caption" display="block">
-                  🌅 {daySchedule.time_am[0]} - {daySchedule.time_am[1]}
-                </Typography>
-              )}
-              
-              {daySchedule.time_pm && daySchedule.time_pm.length === 2 && (
-                <Typography variant="caption" display="block">
-                  🌇 {daySchedule.time_pm[0]} - {daySchedule.time_pm[1]}
-                </Typography>
-              )}
-              
-              {(!daySchedule.time_am && !daySchedule.time_pm) && (
-                <Typography variant="caption" color="text.secondary">
-                  ❌ Cerrado
-                </Typography>
-              )}
-            </Box>
-          </Grid>
-        ))
-      }
-    </Grid>
 
-    {/* Resumen de disponibilidad */}
-    <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-      <Typography variant="caption" color="success.main" fontWeight="medium">
-        ✅ {storeSchedule.filter(day => day.enabled).length} días disponibles
-      </Typography>
-      {storeSchedule.some(day => !day.enabled) && (
-        <Typography variant="caption" color="text.secondary">
-          ❌ {storeSchedule.filter(day => !day.enabled).length} días no disponibles
-        </Typography>
-      )}
-    </Box>
-  </Box>
-)}
+              <Grid container spacing={1}>
+                {storeSchedule
+                  .filter((day) => day.enabled)
+                  .map((daySchedule, index) => (
+                    <Grid
+                      item
+                      size={{ xs: 12, sm: 6, md: 4 }}
+                      key={daySchedule.day || index}
+                    >
+                      <Box
+                        sx={{
+                          p: 1,
+                          border: "1px solid",
+                          borderColor: "divider",
+                          borderRadius: 1,
+                          backgroundColor: "white",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          fontWeight="bold"
+                          color="primary.main"
+                        >
+                          {daySchedule.day}
+                        </Typography>
+
+                        {daySchedule.time_am &&
+                          daySchedule.time_am.length === 2 && (
+                            <Typography variant="caption" display="block">
+                              🌅 {daySchedule.time_am[0]} -{" "}
+                              {daySchedule.time_am[1]}
+                            </Typography>
+                          )}
+
+                        {daySchedule.time_pm &&
+                          daySchedule.time_pm.length === 2 && (
+                            <Typography variant="caption" display="block">
+                              🌇 {daySchedule.time_pm[0]} -{" "}
+                              {daySchedule.time_pm[1]}
+                            </Typography>
+                          )}
+
+                        {!daySchedule.time_am && !daySchedule.time_pm && (
+                          <Typography variant="caption" color="text.secondary">
+                            ❌ Cerrado
+                          </Typography>
+                        )}
+                      </Box>
+                    </Grid>
+                  ))}
+              </Grid>
+
+              {/* Resumen de disponibilidad */}
+              <Box sx={{ mt: 1, display: "flex", gap: 1, flexWrap: "wrap" }}>
+                <Typography
+                  variant="caption"
+                  color="success.main"
+                  fontWeight="medium"
+                >
+                  ✅ {storeSchedule.filter((day) => day.enabled).length} días
+                  disponibles
+                </Typography>
+                {storeSchedule.some((day) => !day.enabled) && (
+                  <Typography variant="caption" color="text.secondary">
+                    ❌ {storeSchedule.filter((day) => !day.enabled).length} días
+                    no disponibles
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          )}
 
           <Grid container spacing={3}>
             {/* Fecha de Inicio */}
-            <Grid item size={{xs:12, md:6}}>
+            <Grid item size={{ xs: 12, md: 6 }}>
               <DatePicker
                 label="Fecha de Inicio"
                 value={startDate}
                 onChange={handleStartDateChange}
                 format="dd/MM/yyyy"
-                minDate={new Date()} // No permitir fechas pasadas
+                minDate={new Date()}
                 slotProps={{
                   textField: {
                     fullWidth: true,
-                    error: !!error && error.includes("inicio")
-                  }
+                    error: !!error && error.includes("inicio"),
+                  },
                 }}
               />
               {startDate && (
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 1, display: "block" }}
+                >
                   Seleccionado: {formatDate(startDate)}
                 </Typography>
               )}
             </Grid>
 
             {/* Fecha de Fin */}
-            <Grid item size={{xs:12, md:6}}>
+            <Grid item size={{ xs: 12, md: 6 }}>
               <DatePicker
                 label="Fecha de Fin"
                 value={endDate}
@@ -256,12 +319,16 @@ console.log(store)
                 slotProps={{
                   textField: {
                     fullWidth: true,
-                    error: !!error && error.includes("fin")
-                  }
+                    error: !!error && error.includes("fin"),
+                  },
                 }}
               />
               {endDate && (
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 1, display: "block" }}
+                >
                   Seleccionado: {formatDate(endDate)}
                 </Typography>
               )}
@@ -269,9 +336,16 @@ console.log(store)
           </Grid>
 
           {/* Resumen de días */}
-          <Box sx={{ mt: 3, p: 2, backgroundColor: 'primary.light', borderRadius: 1 }}>
+          <Box
+            sx={{
+              px: 2,
+              py: 1,
+              backgroundColor: "primary.light",
+              borderRadius: 1,
+            }}
+          >
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={6}>
+              <Grid item size={{ xs: 6 }}>
                 <Typography variant="body2" fontWeight="bold">
                   Días anteriores:
                 </Typography>
@@ -279,22 +353,37 @@ console.log(store)
                   {days} días
                 </Typography>
               </Grid>
-              <Grid item xs={6}>
+              <Grid item size={{ xs: 6 }}>
                 <Typography variant="body2" fontWeight="bold">
                   Nuevos días:
                 </Typography>
-                <Typography 
-                  variant="h6" 
-                  color={calculatedDays !== days ? "primary.main" : "text.primary"}
-                  fontWeight="bold"
-                >
-                  {calculatedDays} días
-                </Typography>
+                <TextField
+                  sx={{ maxWidth: 75 }}
+                  required
+                  type="number"
+                  value={calculatedDays}
+                  variant="outlined"
+                  onChange={(e) =>
+                    setCalculatedDays(parseInt(e.target.value) || 0)
+                  }
+                  inputProps={{ min: 1 }}
+                />
               </Grid>
             </Grid>
           </Box>
 
-          {/* Información adicional */}
+          <TextField
+            sx={{ my: 2 }}
+            fullWidth
+            required
+            label="Motivo"
+            placeholder="Escribe el motivo por el cambio de Fecha"
+            value={motive}
+            variant="outlined"
+            onChange={(e) => setMotive(e.target.value)}
+            error={!!error && error.includes("motivo")}
+          />
+
           <Box sx={{ mt: 2 }}>
             <Typography variant="caption" color="text.secondary">
               💡 Las fechas determinarán la duración total del alquiler
@@ -317,26 +406,31 @@ console.log(store)
           >
             Cancelar
           </Button>
-          {state=="aceptado"?<Button
-            onClick={handleSave}
-            variant="contained"
-            disabled={!startDate || !endDate || calculatedDays === 0}
-            sx={{
-              background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
-              color: "white",
-              fontWeight: "bold",
-              px: 3,
-              "&:hover": {
-                background: "linear-gradient(45deg, #E04E2E 30%, #E6C200 90%)",
-                boxShadow: 3,
-              },
-              "&:disabled": {
-                background: "grey.300",
-              },
-            }}
-          >
-            Guardar Fechas
-          </Button>:<></>}
+          {state === "aceptado" && (
+            <Button
+              onClick={handleSave}
+              variant="contained"
+              disabled={
+                !startDate || !endDate || calculatedDays === 0 || !motive.trim()
+              }
+              sx={{
+                background: "linear-gradient(45deg, #FF5733 30%, #FFD700 90%)",
+                color: "white",
+                fontWeight: "bold",
+                px: 3,
+                "&:hover": {
+                  background:
+                    "linear-gradient(45deg, #E04E2E 30%, #E6C200 90%)",
+                  boxShadow: 3,
+                },
+                "&:disabled": {
+                  background: "grey.300",
+                },
+              }}
+            >
+              Guardar Fechas
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </LocalizationProvider>

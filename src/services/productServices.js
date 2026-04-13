@@ -7,6 +7,7 @@ import {
   query,
   where,
   getDocs,
+  select,
   orderBy,
   deleteDoc,
   arrayUnion,
@@ -34,7 +35,41 @@ export const productService = {
       throw new Error("No se pudo crear el producto: " + error.message);
     }
   },
+async updateProduct(productId, productData) {
+  try {
+    // Verificar que el productId existe
+    if (!productId) {
+      throw new Error("El ID del producto es requerido");
+    }
 
+    // Preparar los datos actualizados
+    const updatedProductData = {
+      ...productData,
+      //store: productData.store, // Mantener store existente si no se proporciona
+      updatedAt: new Date(),
+    };
+
+    // Referencia al documento del producto
+    const productRef = doc(db, "Products", productId);
+    
+    // Actualizar el documento
+    await updateDoc(productRef, updatedProductData);
+    
+    // Obtener el documento actualizado
+    const updatedDoc = await getDoc(productRef);
+    
+    console.log("✅ [updateProduct] Producto actualizado con ID:", productId);
+    
+    return { 
+      id: productId, 
+      ...updatedProductData,
+      ...updatedDoc.data() 
+    };
+  } catch (error) {
+    console.error("❌ [updateProduct] Error actualizando producto:", error);
+    throw new Error("No se pudo actualizar el producto: " + error.message);
+  }
+},
   async addProductToStore(productId, storeId) {
     try {
       // Referencia al documento de la tienda
@@ -107,11 +142,11 @@ export const productService = {
       throw error;
     }
   },
-  async addProductToCart(productId, userId, storeId) {
+  async addProductToCart(productId, userId, storeId, data) {
     try {
       // Validaciones iniciales
-      if (!productId || !userId) {
-        throw new Error("Product ID y User ID son requeridos");
+      if (!productId || !userId || !storeId || !data) {
+        throw new Error("valores son requeridos");
       }
 
       // Referencia al documento de usuario
@@ -153,7 +188,9 @@ export const productService = {
 
       // Actualizar SOLO el campo cart usando arrayUnion
       await updateDoc(userRef, {
-        cart: arrayUnion(productId),
+        cart: arrayUnion(
+          {productId,...data}
+        ),
       });
 
       console.log("✅ Producto agregado al carrito exitosamente");
@@ -177,6 +214,7 @@ export const productService = {
         q = query(
           collection(db, "Products"),
           where("store", "==", storeId),
+          //select("category","name", "rate", "store"),
           where("extra", "==", false),
           orderBy("name"), // Necesitas ordenar por algún campo para la paginación
           startAfter(lastVisible),
@@ -249,7 +287,7 @@ export const productService = {
         });
         lastDoc = doc; // Guardar el último documento para la próxima paginación
       });
-      console.log(items)
+      
       return {
         products: items,
         lastVisible: lastDoc,
@@ -519,7 +557,6 @@ export const getProductItemsWithFilters = async (filters = {}) => {
 
     const querySnapshot = await getDocs(q);
     const items = [];
-
     querySnapshot.forEach((doc) => {
       items.push({
         id: doc.id,
